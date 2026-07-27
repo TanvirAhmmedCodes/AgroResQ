@@ -1,0 +1,2 @@
+1,Tanvir,22,Male,Mirpur,1,2,10,1,0,0,1,90,-1
+2,Suborna,21,Female,Mirpur,1,1,10,0,0,0,1,70,-1
