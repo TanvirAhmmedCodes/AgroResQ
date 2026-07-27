@@ -1,0 +1,71 @@
+# ====================================
+# AgroResQ - C++ SDP Project
+# ====================================
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Object Files
+*.o
+*.obj
+
+# Libraries
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Build Directories
+bin/
+build/
+Build/
+Debug/
+Release/
+x64/
+x86/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Code::Blocks
+*.layout
+*.depend
+
+# Visual Studio
+.vs/
+*.VC.db
+*.VC.opendb
+*.suo
+
+# VS Code Settings
+.vscode/
+
+# CLion
+.idea/
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Log Files
+*.log
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+desktop.ini
