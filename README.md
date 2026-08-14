@@ -139,24 +139,140 @@ The system helps emergency responders efficiently register disasters, manage vic
 ```text
 AgroResQ
 │
-├── algorithms/
-├── core/
-├── data_structures/
-├── entities/
-├── hardware/
-├── repositories/
-│   ├── agriculture/
-│   ├── disaster/
-│   ├── report/
-│   └── victim/
-├── services/
-├── ui/
-├── database/
-├── docs/
+├── algorithms/                 
+│   ├── AlertSystem.h/cpp
+│   ├── BudgetCalculator.h/cpp
+│   ├── CropRecommendation.h/cpp
+│   ├── DecisionSupportEngine.h/cpp
+│   ├── DiseasePrediction.h/cpp
+│   ├── IrrigationPlanner.h/cpp
+│   ├── PriorityCalculator.h/cpp
+│   ├── RecoveryPlanner.h/cpp
+│   ├── ReliefDistributor.h/cpp
+│   ├── ShelterAllocator.h/cpp
+│   └── SoilHealthScore.h/cpp
 │
-├── main.cpp
-├── README.md
-└── .gitignore
+├── analytics/                  
+│   └── PartnerAnalytics.h/cpp
+│
+├── business/                   
+│   └── LicenseManager.h/cpp
+│
+├── core/                       
+│   ├── AuthManager.h/cpp       
+│   ├── BaseEntity.h/cpp
+│   ├── Color.h
+│   ├── FileManager.h/cpp
+│   ├── IDGenerator.h/cpp
+│   ├── StringHelper.h          
+│   ├── TenantManager.h/cpp     
+│   └── Validator.h/cpp
+│
+├── data_structures/           
+│   ├── Graph.h/cpp
+│   ├── LinkedList.h
+│   ├── PriorityQueue.h
+│   └── Queue.h
+│
+├── entities/                  
+│   ├── Crop.h/cpp
+│   ├── Disaster.h/cpp
+│   ├── Family.h/cpp
+│   ├── Farm.h/cpp
+│   ├── ReliefResource.h/cpp
+│   ├── Report.h/cpp
+│   ├── RescueTeam.h/cpp
+│   ├── Shelter.h/cpp
+│   ├── Soil.h/cpp
+│   ├── Victim.h/cpp
+│   ├── Volunteer.h/cpp
+│   └── Weather.h/cpp
+│
+├── hardware/                   
+│   ├── ISensor.h
+│   ├── RealSensor.h/cpp        
+│   ├── SimulatedSensor.h/cpp   
+│   ├── SensorFactory.h/cpp
+│   └── SensorService.h/cpp
+│
+├── notification/               
+│   └── SmsGateway.h/cpp
+│
+├── repositories/              
+│   ├── agriculture/
+│   │   ├── CropRepository.h/cpp
+│   │   ├── FarmRepository.h/cpp
+│   │   ├── SoilRepository.h/cpp
+│   │   └── WeatherRepository.h/cpp
+│   ├── disaster/
+│   │   ├── DisasterRepository.h/cpp
+│   │   ├── ReliefRepository.h/cpp
+│   │   ├── RescueTeamRepository.h/cpp
+│   │   ├── ShelterRepository.h/cpp
+│   │   └── VolunteerRepository.h/cpp
+│   ├── report/
+│   │   └── ReportRepository.h/cpp
+│   └── victim/
+│       ├── FamilyRepository.h/cpp
+│       └── VictimRepository.h/cpp
+│
+├── services/                   
+│   ├── AgricultureService.h/cpp
+│   ├── CropService.h/cpp
+│   ├── DisasterService.h/cpp
+│   ├── FamilyService.h/cpp
+│   ├── ReliefService.h/cpp
+│   ├── ReportService.h/cpp
+│   ├── RescueTeamService.h/cpp
+│   ├── SensorSyncService.h/cpp  
+│   ├── ShelterService.h/cpp
+│   ├── SoilService.h/cpp
+│   ├── VictimService.h/cpp
+│   ├── VolunteerService.h/cpp
+│   └── WeatherService.h/cpp
+│
+├── ui/                         
+│   ├── AgricultureMenu.h/cpp
+│   ├── AlertMenu.h/cpp
+│   ├── CropMenu.h/cpp
+│   ├── DecisionSupportMenu.h/cpp
+│   ├── DisasterMenu.h/cpp
+│   ├── FamilyMenu.h/cpp
+│   ├── FarmMenu.h/cpp
+│   ├── MainMenu.h/cpp           
+│   ├── ReliefMenu.h/cpp
+│   ├── ReportMenu.h/cpp
+│   ├── RescueTeamMenu.h/cpp
+│   ├── RouteOptimizationMenu.h/cpp
+│   ├── ShelterMenu.h/cpp
+│   ├── SoilMenu.h/cpp
+│   ├── VictimMenu.h/cpp
+│   ├── VolunteerMenu.h/cpp
+│   └── WeatherMenu.h/cpp
+│
+├── database/                   
+│   ├── contacts.txt            
+│   ├── crops.txt
+│   ├── disaster.txt
+│   ├── families.txt
+│   ├── farms.txt
+│   ├── relief.txt
+│   ├── reports.txt
+│   ├── rescueTeams.txt
+│   ├── shelters.txt
+│   ├── soil.txt
+│   ├── users.txt              
+│   ├── victims.txt
+│   ├── volunteers.txt
+│   └── weather.txt
+│
+├── docs/                       
+│   ├── SDP_Final_Report.docx
+│   └── User_Manual.md
+│
+├── main.cpp                    
+├── README.md                   
+└── .gitignore                  
 ```
 
 ---
