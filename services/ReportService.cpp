@@ -1,4 +1,5 @@
 #include "ReportService.h"
+#include "../core/AuthManager.h"
 #include "../repositories/victim/VictimRepository.h"
 #include "../repositories/disaster/DisasterRepository.h"
 #include "../repositories/disaster/ShelterRepository.h"
@@ -15,22 +16,21 @@ namespace AgroResQ
             const std::string &description,
             const std::string &date)
         {
-
             if (title.empty())
                 return false;
 
             if (description.empty())
                 return false;
 
-            int id =
-                idGenerator.generateNextId(
-                    "database/reports.txt");
+            int id = idGenerator.generateNextId("database/reports.txt");
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
             Entities::Report report(
                 id,
                 title,
                 description,
-                date);
+                date,
+                tenantId);
 
             return reportRepository.add(report);
         }
@@ -41,18 +41,20 @@ namespace AgroResQ
             const std::string &description,
             const std::string &date)
         {
-
             if (title.empty())
                 return false;
 
             if (description.empty())
                 return false;
 
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
             Entities::Report report(
                 id,
                 title,
                 description,
-                date);
+                date,
+                tenantId);
 
             return reportRepository.update(report);
         }
@@ -60,7 +62,6 @@ namespace AgroResQ
         bool ReportService::deleteReport(
             int id)
         {
-
             return reportRepository.remove(id);
         }
 
@@ -68,30 +69,24 @@ namespace AgroResQ
             int id,
             Entities::Report &report)
         {
-
-            return reportRepository.getById(
-                id,
-                report);
+            return reportRepository.getById(id, report);
         }
 
         std::vector<Entities::Report> ReportService::getAllReports()
         {
-
             return reportRepository.getAll();
         }
+
         int ReportService::getTotalVictims()
         {
             Repositories::VictimRepository repo;
-
             return repo.getAll().size();
         }
 
         int ReportService::getMissingVictimsCount()
         {
             Repositories::VictimRepository repo;
-
             int count = 0;
-
             for (auto &victim : repo.getAll())
             {
                 if (victim.isMissing())
@@ -99,16 +94,13 @@ namespace AgroResQ
                     count++;
                 }
             }
-
             return count;
         }
 
         int ReportService::getRescuedVictimsCount()
         {
             Repositories::VictimRepository repo;
-
             int count = 0;
-
             for (auto &victim : repo.getAll())
             {
                 if (victim.isRescued())
@@ -116,16 +108,13 @@ namespace AgroResQ
                     count++;
                 }
             }
-
             return count;
         }
 
         int ReportService::getReliefReceivedCount()
         {
             Repositories::VictimRepository repo;
-
             int count = 0;
-
             for (auto &victim : repo.getAll())
             {
                 if (victim.hasReliefReceived())
@@ -133,35 +122,29 @@ namespace AgroResQ
                     count++;
                 }
             }
-
             return count;
         }
 
         int ReportService::getTotalDisasters()
         {
             Repositories::DisasterRepository repo;
-
             return repo.getAll().size();
         }
 
         int ReportService::getTotalShelters()
         {
             Repositories::ShelterRepository repo;
-
             return repo.getAll().size();
         }
 
         int ReportService::getAvailableShelterSpace()
         {
             Repositories::ShelterRepository repo;
-
             int total = 0;
-
             for (auto &shelter : repo.getAll())
             {
                 total += shelter.getCapacity() - shelter.getOccupied();
             }
-
             return total;
         }
 

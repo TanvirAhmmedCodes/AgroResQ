@@ -1,49 +1,28 @@
 #pragma once
-
-#include <vector>
 #include <string>
-
-#include "../../entities/RescueTeam.h"
+#include <vector>
 #include "../../core/FileManager.h"
+#include "../../entities/RescueTeam.h"
 
 namespace AgroResQ
 {
 namespace Repositories
 {
+    class RescueTeamRepository
+    {
+    private:
+        Core::FileManager fileManager;
+        std::string filePath;
+        Entities::RescueTeam parse(const std::string& line) const;
 
-class RescueTeamRepository
-{
-private:
-
-    std::string filePath;
-
-    Core::FileManager fileManager;
-
-    Entities::RescueTeam parse(
-        const std::string& line);
-
-    std::string serialize(
-        const Entities::RescueTeam& team);
-
-public:
-
-    RescueTeamRepository();
-
-    bool add(
-        const Entities::RescueTeam& team);
-
-    std::vector<Entities::RescueTeam> getAll();
-
-    bool getById(
-        int id,
-        Entities::RescueTeam& team);
-
-    bool update(
-        const Entities::RescueTeam& team);
-
-    bool remove(
-        int id);
-};
-
+    public:
+        RescueTeamRepository();
+        bool add(const Entities::RescueTeam& team);
+        bool update(const Entities::RescueTeam& team);
+        bool remove(int id);
+        bool getById(int id, Entities::RescueTeam& team);
+        std::vector<Entities::RescueTeam> getAll();
+        std::vector<Entities::RescueTeam> getByTenant(const std::string& tenantId);
+    };
 }
 }

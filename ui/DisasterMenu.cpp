@@ -1,5 +1,8 @@
 #include "DisasterMenu.h"
 #include "../core/Color.h"
+#include "../core/TenantManager.h"
+#include "../core/AuthManager.h"
+#include "../repositories/disaster/DisasterRepository.h"
 #include <iostream>
 #include <iomanip>
 
@@ -103,23 +106,12 @@ namespace AgroResQ
 
                 switch (choice)
                 {
-                case 1:
-                    addDisaster();
-                    break;
-                case 2:
-                    viewAllDisasters();
-                    break;
-                case 3:
-                    searchDisaster();
-                    break;
-                case 4:
-                    updateDisaster();
-                    break;
-                case 5:
-                    deleteDisaster();
-                    break;
-                case 0:
-                    break;
+                case 1: addDisaster(); break;
+                case 2: viewAllDisasters(); break;
+                case 3: searchDisaster(); break;
+                case 4: updateDisaster(); break;
+                case 5: deleteDisaster(); break;
+                case 0: break;
                 default:
                     std::cout << Color::red() << "\nInvalid Choice!\n" << Color::reset();
                 }
@@ -214,7 +206,14 @@ namespace AgroResQ
 
         void DisasterMenu::viewAllDisasters()
         {
-            auto disasters = disasterService.getAllDisasters();
+            std::string currentTenant = Core::TenantManager::getCurrentTenant();
+            std::vector<Entities::Disaster> disasters;
+            if (Core::AuthManager::isAdmin())
+                disasters = disasterService.getAllDisasters();
+            else {
+                Repositories::DisasterRepository repo;
+                disasters = repo.getByTenant(currentTenant);
+            }
 
             if (disasters.empty())
             {

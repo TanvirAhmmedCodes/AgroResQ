@@ -1,4 +1,5 @@
 #include "VolunteerService.h"
+#include "../core/AuthManager.h"
 
 namespace AgroResQ
 {
@@ -13,7 +14,9 @@ namespace AgroResQ
                 return false;
 
             int id = idGenerator.generateNextId("database/volunteers.txt");
-            Entities::Volunteer volunteer(id, name, skill, location, contact, available);
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
+            Entities::Volunteer volunteer(id, name, skill, location, contact, available, tenantId);
             return volunteerRepository.add(volunteer);
         }
 
@@ -23,7 +26,9 @@ namespace AgroResQ
             if (name.empty() || skill.empty() || location.empty() || contact.empty())
                 return false;
 
-            Entities::Volunteer volunteer(id, name, skill, location, contact, available);
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
+            Entities::Volunteer volunteer(id, name, skill, location, contact, available, tenantId);
             return volunteerRepository.update(volunteer);
         }
 

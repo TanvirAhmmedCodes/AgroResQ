@@ -1,136 +1,113 @@
 #include "FarmRepository.h"
-
+#include "../../core/StringHelper.h"
 #include <sstream>
 
 namespace AgroResQ
 {
 namespace Repositories
 {
-
-FarmRepository::FarmRepository()
-{
-    filePath = "database/farms.txt";
-}
-
-Entities::Farm FarmRepository::parse(const std::string& line) const
-{
-    std::stringstream stream(line);
-
-    std::string id;
-    std::string farmerName;
-    std::string location;
-    std::string landArea;
-    std::string soilType;
-    std::string cropName;
-
-    std::getline(stream, id, ',');
-    std::getline(stream, farmerName, ',');
-    std::getline(stream, location, ',');
-    std::getline(stream, landArea, ',');
-    std::getline(stream, soilType, ',');
-    std::getline(stream, cropName);
-
-    return Entities::Farm(
-        std::stoi(id),
-        farmerName,
-        location,
-        std::stod(landArea),
-        soilType,
-        cropName
-    );
-}
-
-bool FarmRepository::add(const Entities::Farm& farm)
-{
-    return fileManager.appendFile(
-        filePath,
-        farm.toString() + "\n");
-}
-
-std::vector<Entities::Farm> FarmRepository::getAll()
-{
-    std::vector<Entities::Farm> farms;
-
-    std::vector<std::string> lines =
-        fileManager.readLines(filePath);
-
-    for (const auto& line : lines)
+    FarmRepository::FarmRepository()
     {
-        farms.push_back(parse(line));
+        filePath = "database/farms.txt";
     }
 
-    return farms;
-}
-
-bool FarmRepository::getById(
-    int id,
-    Entities::Farm& farm)
-{
-    std::vector<Entities::Farm> farms = getAll();
-
-    for (const auto& item : farms)
+    Entities::Farm FarmRepository::parse(const std::string& line) const
     {
-        if (item.getId() == id)
+        std::stringstream ss(line);
+        std::string id, farmerName, location, landArea, soilType, cropName, tenantId;
+        std::getline(ss, id, ',');
+        std::getline(ss, farmerName, ',');
+        std::getline(ss, location, ',');
+        std::getline(ss, landArea, ',');
+        std::getline(ss, soilType, ',');
+        std::getline(ss, cropName, ',');
+        std::getline(ss, tenantId);
+        return Entities::Farm(
+            Core::safeStoi(id),
+            farmerName, location,
+            Core::safeStod(landArea),
+            soilType, cropName,
+            tenantId
+        );
+    }
+
+    bool FarmRepository::add(const Entities::Farm& farm)
+    {
+        return fileManager.appendFile(filePath, farm.toString() + "\n");
+    }
+
+    std::vector<Entities::Farm> FarmRepository::getAll()
+    {
+        std::vector<Entities::Farm> farms;
+        std::vector<std::string> lines = fileManager.readLines(filePath);
+        for (const auto& line : lines)
         {
-            farm = item;
-            return true;
+            if (!line.empty())
+                farms.push_back(parse(line));
         }
+        return farms;
     }
 
-    return false;
-}
-
-bool FarmRepository::update(const Entities::Farm& farm)
-{
-    std::vector<Entities::Farm> farms = getAll();
-
-    bool found = false;
-    std::string data;
-
-    for (auto& item : farms)
+    bool FarmRepository::getById(int id, Entities::Farm& farm)
     {
-        if (item.getId() == farm.getId())
+        auto all = getAll();
+        for (const auto& f : all)
         {
-            item = farm;
-            found = true;
+            if (f.getId() == id)
+            {
+                farm = f;
+                return true;
+            }
         }
-
-        data += item.toString() + "\n";
-    }
-
-    if (!found)
-    {
         return false;
     }
 
-    return fileManager.writeFile(filePath, data);
-}
-
-bool FarmRepository::remove(int id)
-{
-    std::vector<Entities::Farm> farms = getAll();
-
-    bool found = false;
-    std::string data;
-
-    for (const auto& item : farms)
+    bool FarmRepository::update(const Entities::Farm& farm)
     {
-        if (item.getId() == id)
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        for (auto& f : all)
         {
-            found = true;
-            continue;
+            if (f.getId() == farm.getId())
+            {
+                f = farm;
+                found = true;
+            }
+            data += f.toString() + "\n";
         }
-
-        data += item.toString() + "\n";
+        if (!found) return false;
+        return fileManager.writeFile(filePath, data);
     }
 
-    if (!found)
+    bool FarmRepository::remove(int id)
     {
-        return false;
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        for (const auto& f : all)
+        {
+            if (f.getId() == id)
+            {
+                found = true;
+                continue;
+            }
+            data += f.toString() + "\n";
+        }
+        if (!found) return false;
+        return fileManager.writeFile(filePath, data);
     }
 
-    return fileManager.writeFile(filePath, data);
-}
-
+    std::vector<Entities::Farm> FarmRepository::getByTenant(const std::string& tenantId)
+    {
+        std::vector<Entities::Farm> result;
+        auto all = getAll();
+        for (const auto& f : all)
+        {
+            if (f.getTenantId() == tenantId || tenantId == "ALL")
+                result.push_back(f);
+        }
+        return result;
+    }
 }
 }

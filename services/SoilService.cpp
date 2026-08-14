@@ -1,4 +1,5 @@
 #include "SoilService.h"
+#include "../core/AuthManager.h"
 
 namespace AgroResQ
 {
@@ -6,7 +7,6 @@ namespace Services
 {
 
 SoilService::SoilService() = default;
-
 
 bool SoilService::addSoil(
     const std::string& farmId,
@@ -26,22 +26,19 @@ bool SoilService::addSoil(
     if (soilType.empty())
         return false;
 
-
-    int id = idGenerator.generateNextId(
-        "database/soil.txt");
-
+    int id = idGenerator.generateNextId("database/soil.txt");
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
     Entities::Soil soil(
         id,
         farmId,
         phLevel,
         moisture,
-        soilType);
-
+        soilType,
+        tenantId);
 
     return soilRepository.add(soil);
 }
-
 
 bool SoilService::updateSoil(
     int id,
@@ -62,34 +59,30 @@ bool SoilService::updateSoil(
     if (soilType.empty())
         return false;
 
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
     Entities::Soil soil(
         id,
         farmId,
         phLevel,
         moisture,
-        soilType);
-
+        soilType,
+        tenantId);
 
     return soilRepository.update(soil);
 }
-
 
 bool SoilService::deleteSoil(int id)
 {
     return soilRepository.remove(id);
 }
 
-
 bool SoilService::searchSoil(
     int id,
     Entities::Soil& soil)
 {
-    return soilRepository.getById(
-        id,
-        soil);
+    return soilRepository.getById(id, soil);
 }
-
 
 std::vector<Entities::Soil> SoilService::getAllSoils()
 {

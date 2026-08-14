@@ -6,6 +6,7 @@
 #include "DecisionSupportMenu.h"
 #include "../services/CropService.h"
 #include "../hardware/SensorService.h"
+#include "../services/SensorSyncService.h"
 
 namespace AgroResQ
 {
@@ -19,12 +20,13 @@ namespace AgroResQ
             WeatherMenu weatherMenu;
             CropMenu cropMenu;
             DecisionSupportMenu decisionSupportMenu;
-
             Services::CropService cropService;
             Hardware::SensorService sensorService;
+            Services::SensorSyncService syncService; 
 
             void recommendCrop();
             void readFromSensor();
+            void syncSensorData(); 
 
         public:
             AgricultureMenu();

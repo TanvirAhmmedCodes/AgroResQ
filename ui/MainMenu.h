@@ -12,6 +12,9 @@
 #include "RouteOptimizationMenu.h"
 #include "../services/ReportService.h"
 #include "../algorithms/BudgetCalculator.h"
+#include "../business/LicenseManager.h"
+#include "../analytics/PartnerAnalytics.h"
+#include "../core/AuthManager.h"
 
 namespace AgroResQ
 {
@@ -34,9 +37,14 @@ namespace AgroResQ
             
             Services::ReportService reportService;
             Algorithms::BudgetCalculator budgetCalculator;
+            
+            Business::LicenseManager licenseManager;
+            Analytics::PartnerAnalytics partnerAnalytics;
 
             void showDashboard();
             void showBudgetReport();
+            void showPartnerReport();
+            bool hasAccessToFeature(const std::string& featureName);
 
         public:
             MainMenu();

@@ -1,5 +1,5 @@
 #include "FamilyRepository.h"
-#include <fstream>
+#include "../../core/StringHelper.h"
 #include <sstream>
 
 namespace AgroResQ
@@ -18,42 +18,36 @@ namespace AgroResQ
 
         Entities::Family FamilyRepository::parse(const std::string& line)
         {
-            std::stringstream ss(line);
-            std::string id, headName, address, contact, memberCount, displaced;
-
-            getline(ss, id, ',');
-            getline(ss, headName, ',');
-            getline(ss, address, ',');
-            getline(ss, contact, ',');
-            getline(ss, memberCount, ',');
-            getline(ss, displaced);
-
+            std::stringstream stream(line);
+            std::string id, headName, address, contact, memberCount, displaced, tenantId;
+            std::getline(stream, id, ',');
+            std::getline(stream, headName, ',');
+            std::getline(stream, address, ',');
+            std::getline(stream, contact, ',');
+            std::getline(stream, memberCount, ',');
+            std::getline(stream, displaced, ',');
+            std::getline(stream, tenantId);
             return Entities::Family(
-                std::stoi(id),
+                Core::safeStoi(id),
                 headName,
                 address,
                 contact,
-                std::stoi(memberCount),
-                displaced == "1"
+                Core::safeStoi(memberCount),
+                Core::safeStob(displaced),
+                tenantId
             );
         }
 
         bool FamilyRepository::add(const Entities::Family& family)
         {
-            std::ofstream file(filePath, std::ios::app);
-            if (!file) return false;
-            file << serialize(family) << "\n";
-            return true;
+            return fileManager.appendFile(filePath, serialize(family) + "\n");
         }
 
         std::vector<Entities::Family> FamilyRepository::getAll()
         {
             std::vector<Entities::Family> families;
-            std::ifstream file(filePath);
-            if (!file) return families;
-
-            std::string line;
-            while (getline(file, line))
+            std::vector<std::string> lines = fileManager.readLines(filePath);
+            for (const auto& line : lines)
             {
                 if (!line.empty())
                     families.push_back(parse(line));
@@ -63,12 +57,12 @@ namespace AgroResQ
 
         bool FamilyRepository::getById(int id, Entities::Family& family)
         {
-            std::vector<Entities::Family> families = getAll();
-            for (std::size_t i = 0; i < families.size(); ++i)
+            auto families = getAll();
+            for (auto& item : families)
             {
-                if (families[i].getId() == id)
+                if (item.getId() == id)
                 {
-                    family = families[i];
+                    family = item;
                     return true;
                 }
             }
@@ -77,69 +71,62 @@ namespace AgroResQ
 
         bool FamilyRepository::update(const Entities::Family& family)
         {
-            std::vector<Entities::Family> families = getAll();
+            auto families = getAll();
             bool updated = false;
-
-            for (std::size_t i = 0; i < families.size(); ++i)
+            std::string data;
+            for (auto& item : families)
             {
-                if (families[i].getId() == family.getId())
+                if (item.getId() == family.getId())
                 {
-                    families[i] = family;
+                    item = family;
                     updated = true;
                 }
+                data += serialize(item) + "\n";
             }
-
             if (!updated) return false;
-
-            std::ofstream file(filePath);
-            for (std::size_t i = 0; i < families.size(); ++i)
-            {
-                file << serialize(families[i]) << "\n";
-            }
-            return true;
+            return fileManager.writeFile(filePath, data);
         }
 
         bool FamilyRepository::remove(int id)
         {
-            std::vector<Entities::Family> families = getAll();
+            auto families = getAll();
             bool removed = false;
-            std::vector<Entities::Family> updatedList;
-
-            for (std::size_t i = 0; i < families.size(); ++i)
+            std::string data;
+            for (auto& item : families)
             {
-                if (families[i].getId() == id)
+                if (item.getId() == id)
                 {
                     removed = true;
+                    continue;
                 }
-                else
-                {
-                    updatedList.push_back(families[i]);
-                }
+                data += serialize(item) + "\n";
             }
-
             if (!removed) return false;
-
-            std::ofstream file(filePath);
-            for (std::size_t i = 0; i < updatedList.size(); ++i)
-            {
-                file << serialize(updatedList[i]) << "\n";
-            }
-            return true;
+            return fileManager.writeFile(filePath, data);
         }
 
         std::vector<Entities::Family> FamilyRepository::getDisplacedFamilies()
         {
             std::vector<Entities::Family> displaced;
-            std::vector<Entities::Family> all = getAll();
-
-            for (std::size_t i = 0; i < all.size(); ++i)
+            auto all = getAll();
+            for (auto& f : all)
             {
-                if (all[i].isDisplaced())
-                {
-                    displaced.push_back(all[i]);
-                }
+                if (f.isDisplaced())
+                    displaced.push_back(f);
             }
             return displaced;
+        }
+
+        std::vector<Entities::Family> FamilyRepository::getByTenant(const std::string& tenantId)
+        {
+            std::vector<Entities::Family> result;
+            auto all = getAll();
+            for (const auto& f : all)
+            {
+                if (f.getTenantId() == tenantId || tenantId == "ALL")
+                    result.push_back(f);
+            }
+            return result;
         }
     }
 }

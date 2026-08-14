@@ -1,4 +1,5 @@
 #include "AgricultureService.h"
+#include "../core/AuthManager.h"
 
 namespace AgroResQ
 {
@@ -30,6 +31,7 @@ bool AgricultureService::addFarm(
         return false;
 
     int id = idGenerator.generateNextId("database/farms.txt");
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
     Entities::Farm farm(
         id,
@@ -37,7 +39,8 @@ bool AgricultureService::addFarm(
         location,
         landArea,
         soilType,
-        cropName);
+        cropName,
+        tenantId);
 
     return farmRepository.add(farm);
 }
@@ -65,13 +68,16 @@ bool AgricultureService::updateFarm(
     if (!validator.isValidName(cropName))
         return false;
 
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
     Entities::Farm farm(
         id,
         farmerName,
         location,
         landArea,
         soilType,
-        cropName);
+        cropName,
+        tenantId);
 
     return farmRepository.update(farm);
 }

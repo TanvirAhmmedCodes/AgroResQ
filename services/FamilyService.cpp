@@ -1,4 +1,5 @@
 #include "FamilyService.h"
+#include "../core/AuthManager.h"
 
 namespace AgroResQ
 {
@@ -13,7 +14,9 @@ namespace AgroResQ
                 return false;
 
             int id = idGenerator.generateNextId("database/families.txt");
-            Entities::Family family(id, headName, address, contact, memberCount, isDisplaced);
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
+            Entities::Family family(id, headName, address, contact, memberCount, isDisplaced, tenantId);
             return familyRepository.add(family);
         }
 
@@ -23,7 +26,9 @@ namespace AgroResQ
             if (headName.empty() || address.empty() || contact.empty() || memberCount <= 0)
                 return false;
 
-            Entities::Family family(id, headName, address, contact, memberCount, isDisplaced);
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
+            Entities::Family family(id, headName, address, contact, memberCount, isDisplaced, tenantId);
             return familyRepository.update(family);
         }
 

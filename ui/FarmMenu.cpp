@@ -1,5 +1,7 @@
 #include "FarmMenu.h"
-
+#include "../core/TenantManager.h"
+#include "../core/AuthManager.h"
+#include "../repositories/agriculture/FarmRepository.h"
 #include <iomanip>
 #include <iostream>
 
@@ -13,7 +15,6 @@ FarmMenu::FarmMenu() = default;
 void FarmMenu::show()
 {
     int choice;
-
     do
     {
         std::cout << "\n=========================================\n";
@@ -27,212 +28,122 @@ void FarmMenu::show()
         std::cout << "0. Back\n";
         std::cout << "=========================================\n";
         std::cout << "Enter Choice: ";
-
         std::cin >> choice;
 
         switch (choice)
         {
-        case 1:
-            addFarm();
-            break;
-
-        case 2:
-            viewAllFarms();
-            break;
-
-        case 3:
-            searchFarm();
-            break;
-
-        case 4:
-            updateFarm();
-            break;
-
-        case 5:
-            deleteFarm();
-            break;
-
-        case 0:
-            break;
-
-        default:
-            std::cout << "\nInvalid Choice.\n";
+        case 1: addFarm(); break;
+        case 2: viewAllFarms(); break;
+        case 3: searchFarm(); break;
+        case 4: updateFarm(); break;
+        case 5: deleteFarm(); break;
+        case 0: break;
+        default: std::cout << "\nInvalid Choice.\n";
         }
-
     } while (choice != 0);
 }
 
 void FarmMenu::addFarm()
 {
-    std::string farmerName;
-    std::string location;
-    std::string soilType;
-    std::string cropName;
-
+    std::string farmerName, location, soilType, cropName;
     double landArea;
-
     std::cin.ignore();
-
-    std::cout << "\nFarmer Name: ";
+    std::cout << "\n\t\t\t\t\t\tFarmer Name: ";
     std::getline(std::cin, farmerName);
-
-    std::cout << "Location: ";
+    std::cout << "\t\t\t\t\t\tLocation: ";
     std::getline(std::cin, location);
-
-    std::cout << "Land Area (Acres): ";
+    std::cout << "\t\t\t\t\t\tLand Area (Acres): ";
     std::cin >> landArea;
-
     std::cin.ignore();
-
-    std::cout << "Soil Type: ";
+    std::cout << "\t\t\t\t\t\tSoil Type: ";
     std::getline(std::cin, soilType);
-
-    std::cout << "Crop Name: ";
+    std::cout << "\t\t\t\t\t\tCrop Name: ";
     std::getline(std::cin, cropName);
-
-    if (agricultureService.addFarm(
-            farmerName,
-            location,
-            landArea,
-            soilType,
-            cropName))
-    {
-        std::cout << "\nFarm Added Successfully.\n";
-    }
+    if(agricultureService.addFarm(farmerName, location, landArea, soilType, cropName))
+        std::cout << "\n\t\t\t\t\t\tFarm Added Successfully.\n";
     else
-    {
-        std::cout << "\nFailed To Add Farm.\n";
-    }
+        std::cout << "\n\t\t\t\t\t\tFailed To Add Farm.\n";
 }
+
 void FarmMenu::viewAllFarms()
 {
-    std::vector<Entities::Farm> farms =
-        agricultureService.getAllFarms();
-
-    if(farms.empty())
-    {
-        std::cout << "\nNo Farm Data Found.\n";
+    std::string currentTenant = Core::TenantManager::getCurrentTenant();
+    std::vector<Entities::Farm> farms;
+    if (Core::AuthManager::isAdmin())
+        farms = agricultureService.getAllFarms();
+    else {
+        Repositories::FarmRepository repo;
+        farms = repo.getByTenant(currentTenant);
+    }
+    if(farms.empty()) {
+        std::cout << "\n\t\t\t\t\t\tNo Farm Data Found.\n";
         return;
     }
-
-    std::cout << "\n========================================================================================\n";
-
-    std::cout
-        << std::left
-        << std::setw(5)  << "ID"
-        << std::setw(20) << "Farmer"
-        << std::setw(20) << "Location"
-        << std::setw(12) << "Area"
-        << std::setw(18) << "Soil"
-        << std::setw(18) << "Crop"
-        << "\n";
-
-    std::cout << "========================================================================================\n";
-
-    for(const auto& farm : farms)
-    {
-        std::cout
-            << std::left
-            << std::setw(5)  << farm.getId()
-            << std::setw(20) << farm.getFarmerName()
-            << std::setw(20) << farm.getLocation()
-            << std::setw(12) << farm.getLandArea()
-            << std::setw(18) << farm.getSoilType()
-            << std::setw(18) << farm.getCropName()
-            << "\n";
+    std::cout << "\n\t\t\t\t\t\t========================================================================================\n";
+    std::cout << "\t\t\t\t\t\tID\tFarmer\t\tLocation\t\tArea\t\tSoil\t\tCrop\n";
+    std::cout << "\t\t\t\t\t\t========================================================================================\n";
+    for(const auto& farm : farms) {
+        std::cout << "\t\t\t\t\t\t" << farm.getId() << "\t"
+                  << farm.getFarmerName() << "\t\t"
+                  << farm.getLocation() << "\t\t"
+                  << farm.getLandArea() << "\t\t"
+                  << farm.getSoilType() << "\t\t"
+                  << farm.getCropName() << "\n";
     }
 }
-
 
 void FarmMenu::searchFarm()
 {
     int id;
-
-    std::cout << "\nFarm ID: ";
+    std::cout << "\n\t\t\t\t\t\tFarm ID: ";
     std::cin >> id;
-
     Entities::Farm farm;
-
-    if(agricultureService.searchFarm(id, farm))
-    {
-        std::cout << "\nID          : " << farm.getId();
-        std::cout << "\nFarmer      : " << farm.getFarmerName();
-        std::cout << "\nLocation    : " << farm.getLocation();
-        std::cout << "\nLand Area   : " << farm.getLandArea();
-        std::cout << "\nSoil Type   : " << farm.getSoilType();
-        std::cout << "\nCrop Name   : " << farm.getCropName()
-                  << "\n";
-    }
-    else
-    {
-        std::cout << "\nFarm Not Found.\n";
+    if(agricultureService.searchFarm(id, farm)) {
+        std::cout << "\n\t\t\t\t\t\tID          : " << farm.getId();
+        std::cout << "\n\t\t\t\t\t\tFarmer      : " << farm.getFarmerName();
+        std::cout << "\n\t\t\t\t\t\tLocation    : " << farm.getLocation();
+        std::cout << "\n\t\t\t\t\t\tLand Area   : " << farm.getLandArea();
+        std::cout << "\n\t\t\t\t\t\tSoil Type   : " << farm.getSoilType();
+        std::cout << "\n\t\t\t\t\t\tCrop Name   : " << farm.getCropName() << "\n";
+    } else {
+        std::cout << "\n\t\t\t\t\t\tFarm Not Found.\n";
     }
 }
+
 void FarmMenu::updateFarm()
 {
     int id;
-
-    std::string farmerName;
-    std::string location;
-    std::string soilType;
-    std::string cropName;
-
+    std::string farmerName, location, soilType, cropName;
     double landArea;
-
-    std::cout << "\nFarm ID: ";
+    std::cout << "\n\t\t\t\t\t\tFarm ID: ";
     std::cin >> id;
-
     std::cin.ignore();
-
-    std::cout << "Farmer Name: ";
+    std::cout << "\t\t\t\t\t\tFarmer Name: ";
     std::getline(std::cin, farmerName);
-
-    std::cout << "Location: ";
+    std::cout << "\t\t\t\t\t\tLocation: ";
     std::getline(std::cin, location);
-
-    std::cout << "Land Area (Acres): ";
+    std::cout << "\t\t\t\t\t\tLand Area (Acres): ";
     std::cin >> landArea;
-
     std::cin.ignore();
-
-    std::cout << "Soil Type: ";
+    std::cout << "\t\t\t\t\t\tSoil Type: ";
     std::getline(std::cin, soilType);
-
-    std::cout << "Crop Name: ";
+    std::cout << "\t\t\t\t\t\tCrop Name: ";
     std::getline(std::cin, cropName);
-
-    if(agricultureService.updateFarm(
-        id,
-        farmerName,
-        location,
-        landArea,
-        soilType,
-        cropName))
-    {
-        std::cout << "\nFarm Updated Successfully.\n";
-    }
+    if(agricultureService.updateFarm(id, farmerName, location, landArea, soilType, cropName))
+        std::cout << "\n\t\t\t\t\t\tFarm Updated Successfully.\n";
     else
-    {
-        std::cout << "\nUpdate Failed.\n";
-    }
+        std::cout << "\n\t\t\t\t\t\tUpdate Failed.\n";
 }
-
 
 void FarmMenu::deleteFarm()
 {
     int id;
-
-    std::cout << "\nFarm ID: ";
+    std::cout << "\n\t\t\t\t\t\tFarm ID: ";
     std::cin >> id;
-
     if(agricultureService.deleteFarm(id))
-    {
-        std::cout << "\nFarm Deleted Successfully.\n";
-    }
+        std::cout << "\n\t\t\t\t\t\tFarm Deleted Successfully.\n";
     else
-    {
-        std::cout << "\nDelete Failed.\n";
-    }
+        std::cout << "\n\t\t\t\t\t\tDelete Failed.\n";
 }
 
 }

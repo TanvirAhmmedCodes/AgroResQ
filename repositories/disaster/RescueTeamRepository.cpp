@@ -1,177 +1,113 @@
 #include "RescueTeamRepository.h"
-
-#include <fstream>
+#include "../../core/StringHelper.h"
 #include <sstream>
 
 namespace AgroResQ
 {
 namespace Repositories
 {
+    RescueTeamRepository::RescueTeamRepository()
+    {
+        filePath = "database/rescueTeams.txt";
+    }
 
-RescueTeamRepository::RescueTeamRepository()
-{
-    filePath = "database/rescueTeams.txt";
-}
+    Entities::RescueTeam RescueTeamRepository::parse(const std::string& line) const
+    {
+        std::stringstream ss(line);
+        std::string id, teamName, leaderName, location, members, available, tenantId;
+        std::getline(ss, id, ',');
+        std::getline(ss, teamName, ',');
+        std::getline(ss, leaderName, ',');
+        std::getline(ss, location, ',');
+        std::getline(ss, members, ',');
+        std::getline(ss, available, ',');
+        std::getline(ss, tenantId);
+        return Entities::RescueTeam(
+            Core::safeStoi(id),
+            teamName, leaderName, location,
+            Core::safeStoi(members),
+            Core::safeStob(available),
+            tenantId
+        );
+    }
 
-std::string RescueTeamRepository::serialize(
-    const Entities::RescueTeam& team)
-{
-    return team.toString();
-}
+    bool RescueTeamRepository::add(const Entities::RescueTeam& team)
+    {
+        return fileManager.appendFile(filePath, team.toString() + "\n");
+    }
 
-Entities::RescueTeam RescueTeamRepository::parse(
-    const std::string& line)
-{
-    std::stringstream stream(line);
-
-    std::string id;
-    std::string teamName;
-    std::string leaderName;
-    std::string location;
-    std::string members;
-    std::string available;
-
-    getline(stream,id,',');
-    getline(stream,teamName,',');
-    getline(stream,leaderName,',');
-    getline(stream,location,',');
-    getline(stream,members,',');
-    getline(stream,available,',');
-
-    return Entities::RescueTeam(
-        std::stoi(id),
-        teamName,
-        leaderName,
-        location,
-        std::stoi(members),
-        available == "1");
-}
-
-bool RescueTeamRepository::add(
-    const Entities::RescueTeam& team)
-{
-    std::ofstream file(
-        filePath,
-        std::ios::app);
-
-    if(!file)
-        return false;
-
-    file
-        << serialize(team)
-        << "\n";
-
-    return true;
-}
-
-std::vector<Entities::RescueTeam>
-RescueTeamRepository::getAll()
-{
-    std::vector<Entities::RescueTeam> teams;
-
-    std::ifstream file(filePath);
-
-    if(!file)
+    std::vector<Entities::RescueTeam> RescueTeamRepository::getAll()
+    {
+        std::vector<Entities::RescueTeam> teams;
+        std::vector<std::string> lines = fileManager.readLines(filePath);
+        for (const auto& line : lines)
+        {
+            if (!line.empty())
+                teams.push_back(parse(line));
+        }
         return teams;
-
-    std::string line;
-
-    while(getline(file,line))
-    {
-        if(!line.empty())
-        {
-            teams.push_back(
-                parse(line));
-        }
     }
 
-    return teams;
-}
-
-bool RescueTeamRepository::getById(
-    int id,
-    Entities::RescueTeam& team)
-{
-    auto teams = getAll();
-
-    for(auto& item : teams)
+    bool RescueTeamRepository::getById(int id, Entities::RescueTeam& team)
     {
-        if(item.getId() == id)
+        auto all = getAll();
+        for (const auto& t : all)
         {
-            team = item;
-            return true;
+            if (t.getId() == id)
+            {
+                team = t;
+                return true;
+            }
         }
-    }
-
-    return false;
-}
-
-bool RescueTeamRepository::update(
-    const Entities::RescueTeam& team)
-{
-    auto teams = getAll();
-
-    bool updated = false;
-
-    for(auto& item : teams)
-    {
-        if(item.getId() == team.getId())
-        {
-            item = team;
-            updated = true;
-        }
-    }
-
-    if(!updated)
         return false;
-
-    std::ofstream file(filePath);
-
-    for(auto& item : teams)
-    {
-        file
-            << serialize(item)
-            << "\n";
     }
 
-    return true;
-}
-
-bool RescueTeamRepository::remove(
-    int id)
-{
-    auto teams = getAll();
-
-    std::vector<Entities::RescueTeam> updatedList;
-
-    bool removed = false;
-
-    for(auto& item : teams)
+    bool RescueTeamRepository::update(const Entities::RescueTeam& team)
     {
-        if(item.getId() == id)
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        for (auto& t : all)
         {
-            removed = true;
+            if (t.getId() == team.getId())
+            {
+                t = team;
+                found = true;
+            }
+            data += t.toString() + "\n";
         }
-        else
-        {
-            updatedList.push_back(item);
-        }
+        if (!found) return false;
+        return fileManager.writeFile(filePath, data);
     }
 
-    if(!removed)
-        return false;
-
-    std::ofstream file(filePath);
-
-    for(auto& item : updatedList)
+    bool RescueTeamRepository::remove(int id)
     {
-        file
-            << serialize(item)
-            << "\n";
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        for (const auto& t : all)
+        {
+            if (t.getId() == id)
+            {
+                found = true;
+                continue;
+            }
+            data += t.toString() + "\n";
+        }
+        if (!found) return false;
+        return fileManager.writeFile(filePath, data);
     }
 
-    return true;
-}
-
+    std::vector<Entities::RescueTeam> RescueTeamRepository::getByTenant(const std::string& tenantId)
+    {
+        std::vector<Entities::RescueTeam> result;
+        auto all = getAll();
+        for (const auto& t : all)
+        {
+            if (t.getTenantId() == tenantId || tenantId == "ALL")
+                result.push_back(t);
+        }
+        return result;
+    }
 }
 }

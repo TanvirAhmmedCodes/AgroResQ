@@ -1,173 +1,112 @@
 #include "ShelterRepository.h"
-
-#include <fstream>
+#include "../../core/StringHelper.h"
 #include <sstream>
 
 namespace AgroResQ
 {
 namespace Repositories
 {
+    ShelterRepository::ShelterRepository()
+    {
+        filePath = "database/shelters.txt";
+    }
 
-ShelterRepository::ShelterRepository()
-{
-    filePath = "database/shelters.txt";
-}
+    Entities::Shelter ShelterRepository::parse(const std::string& line) const
+    {
+        std::stringstream ss(line);
+        std::string id, name, location, capacity, occupied, tenantId;
+        std::getline(ss, id, ',');
+        std::getline(ss, name, ',');
+        std::getline(ss, location, ',');
+        std::getline(ss, capacity, ',');
+        std::getline(ss, occupied, ',');
+        std::getline(ss, tenantId);
+        return Entities::Shelter(
+            Core::safeStoi(id),
+            name, location,
+            Core::safeStoi(capacity),
+            Core::safeStoi(occupied),
+            tenantId
+        );
+    }
 
-std::string ShelterRepository::serialize(
-    const Entities::Shelter& shelter)
-{
-    return shelter.toString();
-}
+    bool ShelterRepository::add(const Entities::Shelter& shelter)
+    {
+        return fileManager.appendFile(filePath, shelter.toString() + "\n");
+    }
 
-Entities::Shelter ShelterRepository::parse(
-    const std::string& line)
-{
-    std::stringstream stream(line);
-
-    std::string id;
-    std::string name;
-    std::string location;
-    std::string capacity;
-    std::string occupied;
-
-    getline(stream, id, ',');
-    getline(stream, name, ',');
-    getline(stream, location, ',');
-    getline(stream, capacity, ',');
-    getline(stream, occupied, ',');
-
-    return Entities::Shelter(
-        std::stoi(id),
-        name,
-        location,
-        std::stoi(capacity),
-        std::stoi(occupied));
-}
-
-bool ShelterRepository::add(
-    const Entities::Shelter& shelter)
-{
-    std::ofstream file(
-        filePath,
-        std::ios::app);
-
-    if(!file)
-        return false;
-
-    file
-        << serialize(shelter)
-        << "\n";
-
-    return true;
-}
-
-std::vector<Entities::Shelter> ShelterRepository::getAll()
-{
-    std::vector<Entities::Shelter> shelters;
-
-    std::ifstream file(filePath);
-
-    if(!file)
+    std::vector<Entities::Shelter> ShelterRepository::getAll()
+    {
+        std::vector<Entities::Shelter> shelters;
+        std::vector<std::string> lines = fileManager.readLines(filePath);
+        for (const auto& line : lines)
+        {
+            if (!line.empty())
+                shelters.push_back(parse(line));
+        }
         return shelters;
-
-    std::string line;
-
-    while(getline(file, line))
-    {
-        if(!line.empty())
-        {
-            shelters.push_back(
-                parse(line));
-        }
     }
 
-    return shelters;
-}
-
-bool ShelterRepository::getById(
-    int id,
-    Entities::Shelter& shelter)
-{
-    auto shelters = getAll();
-
-    for(auto& item : shelters)
+    bool ShelterRepository::getById(int id, Entities::Shelter& shelter)
     {
-        if(item.getId() == id)
+        auto all = getAll();
+        for (const auto& s : all)
         {
-            shelter = item;
-            return true;
+            if (s.getId() == id)
+            {
+                shelter = s;
+                return true;
+            }
         }
-    }
-
-    return false;
-}
-
-bool ShelterRepository::update(
-    const Entities::Shelter& shelter)
-{
-    auto shelters = getAll();
-
-    bool updated = false;
-
-    for(auto& item : shelters)
-    {
-        if(item.getId() == shelter.getId())
-        {
-            item = shelter;
-            updated = true;
-        }
-    }
-
-    if(!updated)
         return false;
-
-    std::ofstream file(filePath);
-
-    for(auto& item : shelters)
-    {
-        file
-            << serialize(item)
-            << "\n";
     }
 
-    return true;
-}
-
-bool ShelterRepository::remove(
-    int id)
-{
-    auto shelters = getAll();
-
-    bool removed = false;
-
-    std::vector<Entities::Shelter> updatedList;
-
-    for(auto& item : shelters)
+    bool ShelterRepository::update(const Entities::Shelter& shelter)
     {
-        if(item.getId() == id)
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        for (auto& s : all)
         {
-            removed = true;
+            if (s.getId() == shelter.getId())
+            {
+                s = shelter;
+                found = true;
+            }
+            data += s.toString() + "\n";
         }
-        else
-        {
-            updatedList.push_back(item);
-        }
+        if (!found) return false;
+        return fileManager.writeFile(filePath, data);
     }
 
-    if(!removed)
-        return false;
-
-    std::ofstream file(filePath);
-
-    for(auto& item : updatedList)
+    bool ShelterRepository::remove(int id)
     {
-        file
-            << serialize(item)
-            << "\n";
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        for (const auto& s : all)
+        {
+            if (s.getId() == id)
+            {
+                found = true;
+                continue;
+            }
+            data += s.toString() + "\n";
+        }
+        if (!found) return false;
+        return fileManager.writeFile(filePath, data);
     }
 
-    return true;
-}
-
+    std::vector<Entities::Shelter> ShelterRepository::getByTenant(const std::string& tenantId)
+    {
+        std::vector<Entities::Shelter> result;
+        auto all = getAll();
+        for (const auto& s : all)
+        {
+            if (s.getTenantId() == tenantId || tenantId == "ALL")
+                result.push_back(s);
+        }
+        return result;
+    }
 }
 }

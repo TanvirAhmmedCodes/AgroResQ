@@ -1,6 +1,8 @@
 #include "ui/MainMenu.h"
 #include "hardware/SensorService.h"
 #include "core/Color.h"
+#include "core/AuthManager.h"
+#include "core/TenantManager.h"
 #include <iostream>
 
 #ifdef _WIN32
@@ -14,26 +16,18 @@
 
 int main()
 {
-    // ===== Windows Color Enable =====
     #ifdef _WIN32
         AgroResQ::Core::Color::enableWindowsColors();
     #endif
 
-    // ===== Database Folder Create =====
+    // Create database folder
     #ifdef _WIN32
-    if (_access("database", 0) != 0)
-    {
-        _mkdir("database");
-    }
+    if (_access("database", 0) != 0) _mkdir("database");
     #else
     struct stat st;
-    if (stat("database", &st) != 0)
-    {
-        mkdir("database", 0777);
-    }
+    if (stat("database", &st) != 0) mkdir("database", 0777);
     #endif
 
-    // ===== Welcome Banner with Colors =====
     std::cout << AgroResQ::Core::Color::boldCyan()
               << "\n=========================================\n"
               << AgroResQ::Core::Color::boldYellow()
@@ -42,7 +36,47 @@ int main()
               << "=========================================\n"
               << AgroResQ::Core::Color::reset();
 
-    // ===== Sensor Detection =====
+    AgroResQ::Core::AuthManager::initialize();
+
+    
+    std::cout << AgroResQ::Core::Color::yellow()
+              << "[INFO] Default Admin: admin / admin123\n"
+              << AgroResQ::Core::Color::reset();
+    
+
+    std::string username, password;
+    std::cout << "\nEnter Username: ";
+    std::cin >> username;
+    std::cout << "Enter Password: ";
+    std::cin >> password;
+
+    if (!AgroResQ::Core::AuthManager::login(username, password))
+    {
+        std::cout << AgroResQ::Core::Color::red()
+                  << "\nLogin failed! Exiting.\n" 
+                  << AgroResQ::Core::Color::reset();
+        return 1;
+    }
+
+    auto user = AgroResQ::Core::AuthManager::getCurrentUser();
+    std::cout << AgroResQ::Core::Color::green()
+              << "\nWelcome, " << user.username 
+              << " (Role: ";
+    if (user.role == AgroResQ::Core::UserRole::ADMIN)
+        std::cout << "ADMIN)";
+    else if (user.role == AgroResQ::Core::UserRole::NGO_OPERATOR)
+        std::cout << "NGO)";
+    else
+        std::cout << "FARMER)";
+    std::cout << AgroResQ::Core::Color::reset() << "\n";
+
+    AgroResQ::Core::TenantManager::setCurrentTenant(user.tenantId);
+    if (AgroResQ::Core::AuthManager::isAdmin())
+        AgroResQ::Core::TenantManager::setAllowedTenants({"ALL"});
+    else
+        AgroResQ::Core::TenantManager::setAllowedTenants({user.tenantId});
+
+    
     AgroResQ::Hardware::SensorService sensorService(true, "COM3");
     if (sensorService.isSensorConnected())
     {
@@ -61,7 +95,6 @@ int main()
                   << "Using " << sensorService.getSensorInfo() << "\n";
     }
 
-    // ===== Main Menu =====
     AgroResQ::UI::MainMenu mainMenu;
     mainMenu.show();
 

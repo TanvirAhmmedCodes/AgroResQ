@@ -19,13 +19,14 @@ namespace AgroResQ
             int disasterType;
             int affectedPeople;
             int status;
+            std::string tenantId;
 
         public:
             Disaster();
             Disaster(int id, const std::string& name, const std::string& type,
                      const std::string& location, const std::string& date, int severity,
                      int division, int district, int disasterType,
-                     int affectedPeople, int status);
+                     int affectedPeople, int status, const std::string& tenantId = "");
 
             void setName(const std::string& name);
             void setType(const std::string& type);
@@ -37,6 +38,7 @@ namespace AgroResQ
             void setDisasterType(int disasterType);
             void setAffectedPeople(int affectedPeople);
             void setStatus(int status);
+            void setTenantId(const std::string& tenantId);
 
             std::string getName() const;
             std::string getType() const;
@@ -48,6 +50,7 @@ namespace AgroResQ
             int getDisasterType() const;
             int getAffectedPeople() const;
             int getStatus() const;
+            std::string getTenantId() const;
 
             std::string getDivisionName() const;
             std::string getDistrictName() const;

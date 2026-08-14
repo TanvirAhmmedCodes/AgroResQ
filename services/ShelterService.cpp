@@ -1,4 +1,5 @@
 #include "ShelterService.h"
+#include "../core/AuthManager.h"
 
 namespace AgroResQ
 {
@@ -25,16 +26,16 @@ bool ShelterService::addShelter(
     if(occupied < 0 || occupied > capacity)
         return false;
 
-    int id =
-        idGenerator.generateNextId(
-            "database/shelters.txt");
+    int id = idGenerator.generateNextId("database/shelters.txt");
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
     Entities::Shelter shelter(
         id,
         name,
         location,
         capacity,
-        occupied);
+        occupied,
+        tenantId);
 
     return shelterRepository.add(shelter);
 }
@@ -58,12 +59,15 @@ bool ShelterService::updateShelter(
     if(occupied < 0 || occupied > capacity)
         return false;
 
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
     Entities::Shelter shelter(
         id,
         name,
         location,
         capacity,
-        occupied);
+        occupied,
+        tenantId);
 
     return shelterRepository.update(shelter);
 }
@@ -77,9 +81,7 @@ bool ShelterService::searchShelter(
     int id,
     Entities::Shelter& shelter)
 {
-    return shelterRepository.getById(
-        id,
-        shelter);
+    return shelterRepository.getById(id, shelter);
 }
 
 std::vector<Entities::Shelter>
@@ -93,16 +95,13 @@ ShelterService::getAvailableShelters()
 {
     std::vector<Entities::Shelter> available;
 
-    auto shelters =
-        shelterRepository.getAll();
+    auto shelters = shelterRepository.getAll();
 
     for(auto& shelter : shelters)
     {
-        if(shelter.getOccupied() <
-           shelter.getCapacity())
+        if(shelter.getOccupied() < shelter.getCapacity())
         {
-            available.push_back(
-                shelter);
+            available.push_back(shelter);
         }
     }
 

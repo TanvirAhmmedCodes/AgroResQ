@@ -1,68 +1,28 @@
 #pragma once
-
-#include <vector>
 #include <string>
-
-#include "../../entities/Report.h"
+#include <vector>
 #include "../../core/FileManager.h"
-
+#include "../../entities/Report.h"
 
 namespace AgroResQ
 {
 namespace Repositories
 {
+    class ReportRepository
+    {
+    private:
+        Core::FileManager fileManager;
+        std::string filePath;
+        Entities::Report parse(const std::string& line) const;
 
-class ReportRepository
-{
-
-private:
-
-    std::string filePath;
-
-    Core::FileManager fileManager;
-
-
-
-    Entities::Report parse(
-        const std::string& line);
-
-
-
-    std::string serialize(
-        const Entities::Report& report);
-
-
-
-public:
-
-    ReportRepository();
-
-
-
-    bool add(
-        const Entities::Report& report);
-
-
-
-    std::vector<Entities::Report> getAll();
-
-
-
-    bool getById(
-        int id,
-        Entities::Report& report);
-
-
-
-    bool update(
-        const Entities::Report& report);
-
-
-
-    bool remove(
-        int id);
-
-};
-
+    public:
+        ReportRepository();
+        bool add(const Entities::Report& report);
+        bool update(const Entities::Report& report);
+        bool remove(int id);
+        bool getById(int id, Entities::Report& report);
+        std::vector<Entities::Report> getAll();
+        std::vector<Entities::Report> getByTenant(const std::string& tenantId);
+    };
 }
 }

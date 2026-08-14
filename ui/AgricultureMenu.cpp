@@ -1,4 +1,7 @@
 #include "AgricultureMenu.h"
+#include "../core/TenantManager.h"
+#include "../core/AuthManager.h"
+#include "../repositories/agriculture/CropRepository.h"
 #include <iostream>
 #include <algorithm>
 
@@ -24,6 +27,8 @@ namespace AgroResQ
                 std::cout << "5. Decision Support\n";
                 std::cout << "6. Crop Recommendation (AI Based)\n";
                 std::cout << "7. Read Data from Sensor\n";
+                std::cout << "8. Sync Sensor Data to Database\n";
+                
                 std::cout << "0. Back\n";
                 std::cout << "=========================================\n";
                 std::cout << "Enter Choice: ";
@@ -32,31 +37,17 @@ namespace AgroResQ
 
                 switch (choice)
                 {
-                case 1:
-                    farmMenu.show();
-                    break;
-                case 2:
-                    soilMenu.show();
-                    break;
-                case 3:
-                    weatherMenu.show();
-                    break;
-                case 4:
-                    cropMenu.show();
-                    break;
-                case 5:
-                    decisionSupportMenu.show();
-                    break;
-                case 6:
-                    recommendCrop();
-                    break;
-                case 7:
-                    readFromSensor();
-                    break;
-                case 0:
-                    break;
-                default:
-                    std::cout << "\nInvalid Choice.\n";
+                case 1: farmMenu.show(); break;
+                case 2: soilMenu.show(); break;
+                case 3: weatherMenu.show(); break;
+                case 4: cropMenu.show(); break;
+                case 5: decisionSupportMenu.show(); break;
+                case 6: recommendCrop(); break;
+                case 7: readFromSensor(); break;
+                case 8: syncSensorData(); break;
+              
+                case 0: break;
+                default: std::cout << "\nInvalid Choice.\n";
                 }
 
             } while (choice != 0);
@@ -78,7 +69,14 @@ namespace AgroResQ
             std::cout << "Enter Soil Moisture (%): ";
             std::cin >> moisture;
 
-            auto crops = cropService.getAllCrops();
+            std::string currentTenant = Core::TenantManager::getCurrentTenant();
+            std::vector<Entities::Crop> crops;
+            if (Core::AuthManager::isAdmin())
+                crops = cropService.getAllCrops();
+            else {
+                Repositories::CropRepository repo;
+                crops = repo.getByTenant(currentTenant);
+            }
 
             if (crops.empty())
             {
@@ -207,6 +205,25 @@ namespace AgroResQ
             }
 
             std::cout << "=============================================\n";
+        }
+
+        void AgricultureMenu::syncSensorData()
+        {
+            std::cout << "\n========== SENSOR DATA SYNC ==========\n";
+            std::cout << "Sensor: " << syncService.getSensorInfo() << "\n";
+
+            bool success = syncService.syncOnce();
+
+            if (success)
+            {
+                std::cout << "\n[SUCCESS] Sensor data synced to database.\n";
+            }
+            else
+            {
+                std::cout << "\n[FAILED] Could not sync sensor data.\n";
+            }
+
+            std::cout << "=========================================\n";
         }
     }
 }

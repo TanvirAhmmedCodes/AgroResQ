@@ -1,5 +1,8 @@
 #include "AlertMenu.h"
-#include "../core/Color.h" 
+#include "../core/Color.h"
+#include "../core/TenantManager.h"
+#include "../core/AuthManager.h"
+#include "../notification/SmsGateway.h"
 #include <iostream>
 
 namespace AgroResQ
@@ -46,7 +49,7 @@ namespace AgroResQ
                 case 0:
                     break;
                 default:
-                    std::cout << "\nInvalid Choice.\n";
+                    std::cout << "\n\t\t\t\t\t\tInvalid Choice.\n";
                 }
             } while (choice != 0);
         }
@@ -54,7 +57,7 @@ namespace AgroResQ
         void AlertMenu::viewAllAlerts()
         {
             alertSystem.displayAlerts();
-            std::cout << "\nPress Enter to continue...";
+            std::cout << "\n\t\t\t\t\t\tPress Enter to continue...";
             std::cin.ignore();
             std::cin.get();
         }
@@ -62,7 +65,7 @@ namespace AgroResQ
         void AlertMenu::viewUnreadAlerts()
         {
             alertSystem.displayUnreadAlerts();
-            std::cout << "\nPress Enter to continue...";
+            std::cout << "\n\t\t\t\t\t\tPress Enter to continue...";
             std::cin.ignore();
             std::cin.get();
         }
@@ -70,29 +73,29 @@ namespace AgroResQ
         void AlertMenu::markAlertAsRead()
         {
             int id;
-            std::cout << "\nAlert ID: ";
+            std::cout << "\n\t\t\t\t\t\tAlert ID: ";
             std::cin >> id;
             alertSystem.markAsRead(id);
-            std::cout << "\nAlert Marked as Read.\n";
+            std::cout << "\n\t\t\t\t\t\tAlert Marked as Read.\n";
         }
 
         void AlertMenu::markAllAsRead()
         {
             alertSystem.markAllAsRead();
-            std::cout << "\nAll Alerts Marked as Read.\n";
+            std::cout << "\n\t\t\t\t\t\tAll Alerts Marked as Read.\n";
         }
 
         void AlertMenu::sendManualAlert()
         {
             std::string title, message;
             std::cin.ignore();
-            std::cout << "\nAlert Title: ";
+            std::cout << "\n\t\t\t\t\t\tAlert Title: ";
             getline(std::cin, title);
-            std::cout << "Alert Message: ";
+            std::cout << "\t\t\t\t\t\tAlert Message: ";
             getline(std::cin, message);
 
             char severityInput;
-            std::cout << "Severity (c for Critical, n for Normal): ";
+            std::cout << "\t\t\t\t\t\tSeverity (c for Critical, n for Normal): ";
             std::cin >> severityInput;
 
             if (severityInput == 'c' || severityInput == 'C')
@@ -104,7 +107,11 @@ namespace AgroResQ
                 alertSystem.sendGeneralAlert(title, message);
             }
 
-            std::cout << "\nAlert Sent Successfully.\n";
+            Notification::SmsGateway sms;
+            sms.sendAlertToAllContacts(title, message);
+            std::cout << "\t\t\t\t\t\t[SMS] Alert sent to all contacts.\n";
+
+            std::cout << "\n\t\t\t\t\t\tAlert Sent Successfully.\n";
         }
     }
 }

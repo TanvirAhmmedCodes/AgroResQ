@@ -78,6 +78,35 @@ The system helps emergency responders efficiently register disasters, manage vic
 
 ---
 
+## 🔐 Authentication & Role-Based Access
+
+- **User Login System** – Secure authentication with hashed passwords.
+- **Role-Based Access Control** – Three distinct roles:
+  - `ADMIN` – Full system access (all tenants).
+  - `NGO_OPERATOR` – Disaster & victim management (limited analytics).
+  - `FARMER` – Agriculture module & crop recommendations only.
+- **Multi-Tenant Architecture** – Each user sees only their own organization/region data.
+- **License Tier Management** – FREE, PREMIUM, NGO, GOVERNMENT tiers with feature gating.
+
+---
+
+## 📊 Partner Analytics
+
+- Aggregated, anonymized soil and weather reports (CSV/JSON export).
+- Designed for B2B sales (agri-input companies, insurers).
+- Tenant-aware: NGOs/Farmers see only their own data; Admins see all.
+
+---
+
+## 📱 IoT & Sensor Integration
+
+- **Sensor Abstraction** – `ISensor` interface with `RealSensor` (Serial/COM) and `SimulatedSensor` (dummy data) implementations.
+- **Automatic Fallback** – If no hardware is connected, the system seamlessly switches to simulated data.
+- **Sensor Sync Service** – One-click sync to read sensor data and save directly into Soil & Weather databases.
+- **Future Ready** – Designed to connect with ESP32 nodes for real-time soil moisture, pH, temperature, and humidity monitoring.
+
+---
+
 ## 📊 Reporting Module
 
 - Report Generation
@@ -100,7 +129,7 @@ The system helps emergency responders efficiently register disasters, manage vic
                 │                     │
          Repository Layer      Repository Layer
                 │                     │
-           File Handling Database
+                File Handling Database
 ```
 
 ---
@@ -155,6 +184,15 @@ AgroResQ
 
 ---
 
+## Business & Analytics Algorithms
+
+- **Tenant Filtering** – Secure multi-tenant data isolation.
+- **License Manager** – Feature access control based on subscription tier.
+- **Partner Analytics Aggregator** – Calculates averages and generates reports for external stakeholders.
+- **SMS Gateway Simulation** – Simulated SMS alerts for disaster notifications (ready for Twilio/GSM integration).
+
+---
+
 # 📚 Data Structures Used
 
 - Linked List
@@ -184,6 +222,27 @@ victims.txt
 volunteers.txt
 weather.txt
 ```
+---
+
+## 🔐 Default Login & User Guide
+
+To get started quickly, use the default admin credentials:
+
+| Field | Value |
+| :--- | :--- |
+| **Username** | `admin` |
+| **Password** | `admin123` |
+| **Role** | ADMIN |
+
+### User Roles & Access
+
+| Role | Can Access |
+| :--- | :--- |
+| **ADMIN** | Everything (Disaster, Victim, Shelter, Relief, Rescue, Agriculture, Volunteers, Families, Alerts, Route Optimization, Reports, Dashboard, Budget, Partner Analytics). |
+| **NGO_OPERATOR** | Disaster, Victim, Shelter, Relief, Rescue, Volunteer, Family, Alert, Route Optimization, Report, Dashboard (Partial). *Cannot access Budget or Partner Analytics.* |
+| **FARMER** | Agriculture Module only (Farm, Crop, Soil, Weather, Decision Support, Crop Recommendation). |
+
+> **Note:** New users can be added manually in the `database/users.txt` file or via the built-in admin functions (future UI update).
 
 ---
 
@@ -250,6 +309,26 @@ git clone https://github.com/TanvirAhmmedCodes/AgroResQ.git
 ```
 
 ---
+
+## 🛠️ System Workflow (Quick Start)
+
+1. **Run the application** – The `database/` folder and `users.txt` will auto-create.
+2. **Login** using `admin` / `admin123`.
+3. **Add Disaster** – Go to Disaster Management -> Add Disaster. This will automatically send an SMS alert (simulated) to all contacts in `database/contacts.txt`.
+4. **Manage Victims** – Register victims, assign shelters, and process rescue using the Priority Queue.
+5. **Sync Sensor Data** – Go to Agriculture Management -> Sync Sensor Data. The system will read simulated sensor values (or real if ESP32 is connected) and save them to Soil & Weather databases.
+6. **Get Recommendations** – Use Decision Support or Crop Recommendation to get AI-based agricultural advice.
+7. **Check Dashboard** – View real-time statistics based on your role and tenant.
+
+## 📂 Important Database Files
+
+| File | Purpose |
+| :--- | :--- |
+| `database/users.txt` | Stores usernames, hashed passwords, roles, and tenant IDs. |
+| `database/contacts.txt` | Phone numbers for SMS alerts (auto-generated with demo numbers). |
+| `database/disaster.txt` | All registered disasters. |
+| `database/victims.txt` | Victim records with priority scores. |
+| `database/soil.txt` & `database/weather.txt` | Sensor data storage. |
 
 ## Compile
 

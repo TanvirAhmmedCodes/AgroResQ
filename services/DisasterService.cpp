@@ -1,4 +1,6 @@
 #include "DisasterService.h"
+#include "../core/AuthManager.h"
+#include "../notification/SmsGateway.h"
 
 namespace AgroResQ
 {
@@ -18,13 +20,19 @@ namespace AgroResQ
             if (!validator.isValidSeverity(severity)) return false;
 
             int id = idGenerator.generateNextId("database/disaster.txt");
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
             Entities::Disaster disaster(id, name, type, location, date, severity,
-                                        division, district, disasterType, affectedPeople, status);
+                                        division, district, disasterType, affectedPeople, status, tenantId);
 
             if (disasterRepository.add(disaster))
             {
                 alertSystem.sendDisasterAlert(disaster);
+
+                Notification::SmsGateway sms;
+                std::string smsMsg = "Disaster: " + name + " at " + location + ". Severity: " + std::to_string(severity) + "/10";
+                sms.sendAlertToAllContacts("DISASTER ALERT", smsMsg);
+
                 return true;
             }
             return false;
@@ -41,8 +49,18 @@ namespace AgroResQ
             if (!validator.isValidDate(date)) return false;
             if (!validator.isValidSeverity(severity)) return false;
 
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
             Entities::Disaster disaster(id, name, type, location, date, severity,
-                                        division, district, disasterType, affectedPeople, status);
+                                        division, district, disasterType, affectedPeople, status, tenantId);
+
+            if (severity >= 4 && disasterRepository.update(disaster))
+            {
+                Notification::SmsGateway sms;
+                std::string smsMsg = "CRITICAL UPDATE: " + name + " at " + location + ". Severity: " + std::to_string(severity) + "/10";
+                sms.sendAlertToAllContacts("CRITICAL DISASTER UPDATE", smsMsg);
+                return true;
+            }
 
             return disasterRepository.update(disaster);
         }

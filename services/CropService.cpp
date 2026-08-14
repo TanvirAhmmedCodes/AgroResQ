@@ -1,4 +1,5 @@
 #include "CropService.h"
+#include "../core/AuthManager.h"
 
 namespace AgroResQ
 {
@@ -6,7 +7,6 @@ namespace Services
 {
 
 CropService::CropService() = default;
-
 
 bool CropService::addCrop(
     const std::string& cropName,
@@ -26,22 +26,19 @@ bool CropService::addCrop(
     if (waterRequirement < 0)
         return false;
 
-
-    int id = idGenerator.generateNextId(
-        "database/crops.txt");
-
+    int id = idGenerator.generateNextId("database/crops.txt");
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
     Entities::Crop crop(
         id,
         cropName,
         season,
         suitableSoil,
-        waterRequirement);
-
+        waterRequirement,
+        tenantId);
 
     return cropRepository.add(crop);
 }
-
 
 bool CropService::updateCrop(
     int id,
@@ -62,34 +59,30 @@ bool CropService::updateCrop(
     if (waterRequirement < 0)
         return false;
 
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
     Entities::Crop crop(
         id,
         cropName,
         season,
         suitableSoil,
-        waterRequirement);
-
+        waterRequirement,
+        tenantId);
 
     return cropRepository.update(crop);
 }
-
 
 bool CropService::deleteCrop(int id)
 {
     return cropRepository.remove(id);
 }
 
-
 bool CropService::searchCrop(
     int id,
     Entities::Crop& crop)
 {
-    return cropRepository.getById(
-        id,
-        crop);
+    return cropRepository.getById(id, crop);
 }
-
 
 std::vector<Entities::Crop> CropService::getAllCrops()
 {

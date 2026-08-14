@@ -1,4 +1,6 @@
 #include "RouteOptimizationMenu.h"
+#include "../core/TenantManager.h"
+#include "../core/AuthManager.h"
 #include <iostream>
 #include <iomanip>
 
@@ -69,7 +71,7 @@ namespace AgroResQ
                 case 0:
                     break;
                 default:
-                    std::cout << "\nInvalid Choice.\n";
+                    std::cout << "\n\t\t\t\t\t\tInvalid Choice.\n";
                 }
             } while (choice != 0);
         }
@@ -79,24 +81,24 @@ namespace AgroResQ
             std::string source, destination;
 
             std::cin.ignore();
-            std::cout << "\nSource Location: ";
+            std::cout << "\n\t\t\t\t\t\tSource Location: ";
             getline(std::cin, source);
-            std::cout << "Destination Location: ";
+            std::cout << "\t\t\t\t\t\tDestination Location: ";
             getline(std::cin, destination);
 
             auto path = graph.findShortestPath(source, destination);
 
             if (path.empty())
             {
-                std::cout << "\nNo route found between " << source << " and " << destination << "\n";
+                std::cout << "\n\t\t\t\t\t\tNo route found between " << source << " and " << destination << "\n";
                 return;
             }
 
-            std::cout << "\nShortest Path from " << source << " to " << destination << ":\n";
+            std::cout << "\n\t\t\t\t\t\tShortest Path from " << source << " to " << destination << ":\n";
             int totalDistance = 0;
             for (size_t i = 0; i < path.size(); i++)
             {
-                std::cout << path[i];
+                std::cout << "\t\t\t\t\t\t" << path[i];
                 if (i < path.size() - 1)
                 {
                     int weight = graph.getEdgeWeight(path[i], path[i + 1]);
@@ -104,12 +106,12 @@ namespace AgroResQ
                     std::cout << " -> (" << weight << ") -> ";
                 }
             }
-            std::cout << "\nTotal Distance: " << totalDistance << " units\n";
+            std::cout << "\n\t\t\t\t\t\tTotal Distance: " << totalDistance << " units\n";
         }
 
         void RouteOptimizationMenu::displayAllRoutes()
         {
-            std::cout << "\n=== ALL ROUTES IN SYSTEM ===\n";
+            std::cout << "\n\t\t\t\t\t\t=== ALL ROUTES IN SYSTEM ===\n";
             graph.displayGraph();
         }
 
@@ -117,11 +119,11 @@ namespace AgroResQ
         {
             std::string name;
             std::cin.ignore();
-            std::cout << "\nLocation Name: ";
+            std::cout << "\n\t\t\t\t\t\tLocation Name: ";
             getline(std::cin, name);
 
             graph.addVertex(name);
-            std::cout << "\nLocation Added Successfully.\n";
+            std::cout << "\n\t\t\t\t\t\tLocation Added Successfully.\n";
         }
 
         void RouteOptimizationMenu::addRoute()
@@ -130,15 +132,15 @@ namespace AgroResQ
             int weight;
 
             std::cin.ignore();
-            std::cout << "\nFrom: ";
+            std::cout << "\n\t\t\t\t\t\tFrom: ";
             getline(std::cin, from);
-            std::cout << "To: ";
+            std::cout << "\t\t\t\t\t\tTo: ";
             getline(std::cin, to);
-            std::cout << "Distance: ";
+            std::cout << "\t\t\t\t\t\tDistance: ";
             std::cin >> weight;
 
             graph.addEdge(from, to, weight);
-            std::cout << "\nRoute Added Successfully.\n";
+            std::cout << "\n\t\t\t\t\t\tRoute Added Successfully.\n";
         }
     }
 }

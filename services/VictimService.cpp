@@ -1,4 +1,5 @@
 #include "VictimService.h"
+#include "../core/AuthManager.h"
 #include "../repositories/disaster/ShelterRepository.h"
 #include "../entities/Shelter.h"
 
@@ -16,9 +17,11 @@ namespace AgroResQ
             if (name.empty() || age <= 0) return false;
 
             int id = idGenerator.generateNextId("database/victims.txt");
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
             Entities::Victim victim(id, name, age, gender, address, vulnerable, familyId,
                                     healthStatus, disabled, rescued, reliefReceived,
-                                    missing, priorityScore, shelterId);
+                                    missing, priorityScore, shelterId, tenantId);
             victim.setPriorityScore(static_cast<int>(
                 priorityCalculator.calculateVictimPriority(victim)));
 
@@ -59,9 +62,11 @@ namespace AgroResQ
         {
             if (name.empty() || age <= 0) return false;
 
+            std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
             Entities::Victim victim(id, name, age, gender, address, vulnerable, familyId,
                                     healthStatus, disabled, rescued, reliefReceived,
-                                    missing, priorityScore, shelterId);
+                                    missing, priorityScore, shelterId, tenantId);
             victim.setPriorityScore(static_cast<int>(
                 priorityCalculator.calculateVictimPriority(victim)));
 

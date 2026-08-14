@@ -1,14 +1,46 @@
 #include "MainMenu.h"
 #include "../core/Color.h"
+#include "../core/TenantManager.h"
+#include "../core/AuthManager.h"
 #include <iostream>
 #include <iomanip>
 
 using namespace AgroResQ::Core;
+
 namespace AgroResQ
 {
     namespace UI
     {
-        MainMenu::MainMenu() = default;
+        MainMenu::MainMenu() : licenseManager(Business::LicenseTier::GOVERNMENT) {}
+
+        bool MainMenu::hasAccessToFeature(const std::string &featureName)
+        {
+            auto user = AuthManager::getCurrentUser();
+            if (user.role == UserRole::ADMIN)
+                return true;
+            if (user.role == UserRole::NGO_OPERATOR)
+            {
+                if (featureName == "PARTNER_ANALYTICS" || featureName == "BUDGET_REPORT")
+                    return false;
+                return true;
+            }
+            if (user.role == UserRole::FARMER)
+            {
+                if (featureName == "DISASTER_MANAGEMENT" ||
+                    featureName == "VICTIM_MANAGEMENT" ||
+                    featureName == "SHELTER_MANAGEMENT" ||
+                    featureName == "RELIEF_MANAGEMENT" ||
+                    featureName == "RESCUE_TEAM" ||
+                    featureName == "VOLUNTEER_MANAGEMENT" ||
+                    featureName == "FAMILY_MANAGEMENT" ||
+                    featureName == "ROUTE_OPTIMIZATION" ||
+                    featureName == "BUDGET_REPORT" ||
+                    featureName == "PARTNER_ANALYTICS")
+                    return false;
+                return true;
+            }
+            return false;
+        }
 
         void MainMenu::show()
         {
@@ -18,20 +50,48 @@ namespace AgroResQ
                 std::cout << "\n=========================================\n";
                 std::cout << "              AgroResQ SYSTEM\n";
                 std::cout << "=========================================\n";
-                std::cout << "1. Disaster Management\n";
-                std::cout << "2. Victim Management\n";
-                std::cout << "3. Shelter Management\n";
-                std::cout << "4. Relief Management\n";
-                std::cout << "5. Rescue Team Management\n";
-                std::cout << "6. Agriculture Management\n";
-                std::cout << "7. Volunteer Management\n";
-                std::cout << "8. Family Management\n";
-                std::cout << "9. Alert System\n";
-                std::cout << "10. Route Optimization\n";
-                std::cout << "11. Report Management\n";
-                std::cout << "12. Dashboard\n";
-                std::cout << "13. Budget Report\n";
-                std::cout << "0. Exit\n";
+                std::cout << Color::boldGreen() << "User: " << AuthManager::getCurrentUser().username
+                          << " | Tenant: " << TenantManager::getCurrentTenant()
+                          << " | Role: ";
+                if (AuthManager::isAdmin())
+                    std::cout << "ADMIN";
+                else if (AuthManager::isNGO())
+                    std::cout << "NGO";
+                else
+                    std::cout << "FARMER";
+                std::cout << Color::reset() << "\n";
+                std::cout << "=========================================\n";
+
+                int menuIndex = 1;
+                if (hasAccessToFeature("DISASTER_MANAGEMENT"))
+                    std::cout << menuIndex++ << ". Disaster Management\n";
+                if (hasAccessToFeature("VICTIM_MANAGEMENT"))
+                    std::cout << menuIndex++ << ". Victim Management\n";
+                if (hasAccessToFeature("SHELTER_MANAGEMENT"))
+                    std::cout << menuIndex++ << ". Shelter Management\n";
+                if (hasAccessToFeature("RELIEF_MANAGEMENT"))
+                    std::cout << menuIndex++ << ". Relief Management\n";
+                if (hasAccessToFeature("RESCUE_TEAM"))
+                    std::cout << menuIndex++ << ". Rescue Team Management\n";
+                if (hasAccessToFeature("AGRICULTURE"))
+                    std::cout << menuIndex++ << ". Agriculture Management\n";
+                if (hasAccessToFeature("VOLUNTEER_MANAGEMENT"))
+                    std::cout << menuIndex++ << ". Volunteer Management\n";
+                if (hasAccessToFeature("FAMILY_MANAGEMENT"))
+                    std::cout << menuIndex++ << ". Family Management\n";
+                if (hasAccessToFeature("ALERT"))
+                    std::cout << menuIndex++ << ". Alert System\n";
+                if (hasAccessToFeature("ROUTE_OPTIMIZATION"))
+                    std::cout << menuIndex++ << ". Route Optimization\n";
+                if (hasAccessToFeature("REPORT"))
+                    std::cout << menuIndex++ << ". Report Management\n";
+                if (hasAccessToFeature("DASHBOARD"))
+                    std::cout << menuIndex++ << ". Dashboard\n";
+                if (hasAccessToFeature("BUDGET_REPORT"))
+                    std::cout << menuIndex++ << ". Budget Report\n";
+                if (hasAccessToFeature("PARTNER_ANALYTICS"))
+                    std::cout << menuIndex++ << ". Partner Analytics\n";
+                std::cout << "0. Logout & Exit\n";
                 std::cout << "=========================================\n";
                 std::cout << "Enter Choice: ";
                 std::cin >> choice;
@@ -39,99 +99,169 @@ namespace AgroResQ
                 switch (choice)
                 {
                 case 1:
-                    disasterMenu.show();
+                    if (hasAccessToFeature("DISASTER_MANAGEMENT"))
+                        disasterMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 2:
-                    victimMenu.show();
+                    if (hasAccessToFeature("VICTIM_MANAGEMENT"))
+                        victimMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 3:
-                    shelterMenu.show();
+                    if (hasAccessToFeature("SHELTER_MANAGEMENT"))
+                        shelterMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 4:
-                    reliefMenu.show();
+                    if (hasAccessToFeature("RELIEF_MANAGEMENT"))
+                        reliefMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 5:
-                    rescueTeamMenu.show();
+                    if (hasAccessToFeature("RESCUE_TEAM"))
+                        rescueTeamMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 6:
-                    agricultureMenu.show();
+                    if (hasAccessToFeature("AGRICULTURE"))
+                        agricultureMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 7:
-                    volunteerMenu.show();
+                    if (hasAccessToFeature("VOLUNTEER_MANAGEMENT"))
+                        volunteerMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 8:
-                    familyMenu.show();
+                    if (hasAccessToFeature("FAMILY_MANAGEMENT"))
+                        familyMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 9:
-                    alertMenu.show();
+                    if (hasAccessToFeature("ALERT"))
+                        alertMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 10:
-                    routeMenu.show();
+                    if (hasAccessToFeature("ROUTE_OPTIMIZATION"))
+                        routeMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 11:
-                    reportMenu.show();
+                    if (hasAccessToFeature("REPORT"))
+                        reportMenu.show();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 12:
-                    showDashboard();
+                    if (hasAccessToFeature("DASHBOARD"))
+                        showDashboard();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 13:
-                    showBudgetReport();
+                    if (hasAccessToFeature("BUDGET_REPORT"))
+                        showBudgetReport();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
+                    break;
+                case 14:
+                    if (hasAccessToFeature("PARTNER_ANALYTICS"))
+                        showPartnerReport();
+                    else
+                        std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
                 case 0:
-                    std::cout << "\nThank you for using AgroResQ.\n";
+                    AuthManager::logout();
+                    std::cout << "\n\t\t\t\t\t\tLogged out. Thank you for using AgroResQ.\n";
                     break;
                 default:
-                    std::cout << "\nInvalid Choice.\n";
+                    std::cout << "\n\t\t\t\t\t\tInvalid Choice.\n";
                 }
             } while (choice != 0);
         }
 
         void MainMenu::showDashboard()
         {
-            std::cout << "\n============================================================\n";
-            std::cout << "                    AGRO-RESQ DASHBOARD\n";
-            std::cout << "============================================================\n";
-
-            std::cout << "\n--- DISASTER STATISTICS ---\n";
-            std::cout << "Total Disasters Recorded    : " << reportService.getTotalDisasters() << "\n";
-
-            std::cout << "\n--- VICTIM STATISTICS ---\n";
-            std::cout << "Total Victims Registered    : " << reportService.getTotalVictims() << "\n";
-            std::cout << "Victims Rescued             : " << reportService.getRescuedVictimsCount() << "\n";
-            std::cout << "Victims Missing             : " << reportService.getMissingVictimsCount() << "\n";
-            std::cout << "Relief Received             : " << reportService.getReliefReceivedCount() << "\n";
-
-            std::cout << "\n--- SHELTER STATISTICS ---\n";
-            std::cout << "Total Shelters Available    : " << reportService.getTotalShelters() << "\n";
-            std::cout << "Available Shelter Space     : " << reportService.getAvailableShelterSpace() << "\n";
-
-            std::cout << "\n============================================================\n";
-
+            std::cout << "\n\t\t\t\t\t\t============================================================\n";
+            std::cout << "\t\t\t\t\t\t                    AGRO-RESQ DASHBOARD\n";
+            std::cout << "\t\t\t\t\t\t============================================================\n";
+            if (licenseManager.getTier() == Business::LicenseTier::FREE)
+            {
+                std::cout << "\n\t\t\t\t\t\t[INFO] You are on FREE tier. Upgrade to PREMIUM or NGO for full stats.\n";
+                std::cout << "\t\t\t\t\t\tTotal Disasters: " << reportService.getTotalDisasters() << "\n";
+                std::cout << "\t\t\t\t\t\tTotal Victims: " << reportService.getTotalVictims() << "\n";
+            }
+            else
+            {
+                std::cout << "\n\t\t\t\t\t\t--- DISASTER STATISTICS ---\n";
+                std::cout << "\t\t\t\t\t\tTotal Disasters Recorded    : " << reportService.getTotalDisasters() << "\n";
+                std::cout << "\n\t\t\t\t\t\t--- VICTIM STATISTICS ---\n";
+                std::cout << "\t\t\t\t\t\tTotal Victims Registered    : " << reportService.getTotalVictims() << "\n";
+                std::cout << "\t\t\t\t\t\tVictims Rescued             : " << reportService.getRescuedVictimsCount() << "\n";
+                std::cout << "\t\t\t\t\t\tVictims Missing             : " << reportService.getMissingVictimsCount() << "\n";
+                std::cout << "\t\t\t\t\t\tRelief Received             : " << reportService.getReliefReceivedCount() << "\n";
+                std::cout << "\n\t\t\t\t\t\t--- SHELTER STATISTICS ---\n";
+                std::cout << "\t\t\t\t\t\tTotal Shelters Available    : " << reportService.getTotalShelters() << "\n";
+                std::cout << "\t\t\t\t\t\tAvailable Shelter Space     : " << reportService.getAvailableShelterSpace() << "\n";
+            }
+            if (licenseManager.canAccess(Business::Feature::PARTNER_ANALYTICS) && hasAccessToFeature("PARTNER_ANALYTICS"))
+            {
+                showPartnerReport();
+            }
+            std::cout << "\n\t\t\t\t\t\t============================================================\n";
             if (reportService.getMissingVictimsCount() > 0)
             {
-                std::cout << "\n[ALERT] " << reportService.getMissingVictimsCount()
+                std::cout << "\n\t\t\t\t\t\t[ALERT] " << reportService.getMissingVictimsCount()
                           << " victims are still missing! Immediate action required.\n";
             }
-
             if (reportService.getAvailableShelterSpace() < 10)
             {
-                std::cout << "[WARNING] Shelter space is critically low!\n";
+                std::cout << "\t\t\t\t\t\t[WARNING] Shelter space is critically low!\n";
             }
-
             if (reportService.getTotalDisasters() == 0)
             {
-                std::cout << "\n[INFO] No disasters recorded. System is on standby.\n";
+                std::cout << "\n\t\t\t\t\t\t[INFO] No disasters recorded. System is on standby.\n";
             }
-
-            std::cout << "\nPress Enter to continue...";
+            std::cout << "\n\t\t\t\t\t\tPress Enter to continue...";
             std::cin.ignore();
             std::cin.get();
         }
 
+        void MainMenu::showPartnerReport()
+        {
+            if (!hasAccessToFeature("PARTNER_ANALYTICS"))
+            {
+                std::cout << "\t\t\t\t\t\tAccess Denied.\n";
+                return;
+            }
+            std::cout << "\n\t\t\t\t\t\t--- PARTNER ANALYTICS (AGGREGATED) ---\n";
+
+            std::string tenantId = Core::TenantManager::getCurrentTenant();
+            std::cout << "\t\t\t\t\t\t" << partnerAnalytics.generateCsvReport("", tenantId) << std::endl;
+            std::cout << "\t\t\t\t\t\t----------------------------------------\n";
+        }
+
         void MainMenu::showBudgetReport()
         {
+            if (!hasAccessToFeature("BUDGET_REPORT"))
+            {
+                std::cout << "\t\t\t\t\t\tAccess Denied.\n";
+                return;
+            }
             std::cout << budgetCalculator.generateBudgetReport();
-            std::cout << "\nPress Enter to continue...";
+            std::cout << "\n\t\t\t\t\t\tPress Enter to continue...";
             std::cin.ignore();
             std::cin.get();
         }

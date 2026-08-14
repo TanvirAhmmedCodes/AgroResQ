@@ -1,4 +1,5 @@
 #include "ReliefService.h"
+#include "../core/AuthManager.h"
 
 namespace AgroResQ
 {
@@ -19,16 +20,16 @@ bool ReliefService::addReliefResource(
     if(quantity < 0)
         return false;
 
-    int id =
-        idGenerator.generateNextId(
-            "database/relief.txt");
+    int id = idGenerator.generateNextId("database/relief.txt");
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
     Entities::ReliefResource resource(
         id,
         name,
         category,
         quantity,
-        unit);
+        unit,
+        tenantId);
 
     return reliefRepository.add(resource);
 }
@@ -46,12 +47,15 @@ bool ReliefService::updateReliefResource(
     if(quantity < 0)
         return false;
 
+    std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
+
     Entities::ReliefResource resource(
         id,
         name,
         category,
         quantity,
-        unit);
+        unit,
+        tenantId);
 
     return reliefRepository.update(resource);
 }
@@ -66,9 +70,7 @@ bool ReliefService::searchReliefResource(
     int id,
     Entities::ReliefResource& resource)
 {
-    return reliefRepository.getById(
-        id,
-        resource);
+    return reliefRepository.getById(id, resource);
 }
 
 std::vector<Entities::ReliefResource>

@@ -10,24 +10,12 @@ namespace AgroResQ
         static std::string Severity[] = {"", "Low", "Medium", "High", "Critical"};
         static std::string Status[] = {"", "Active", "Under Control", "Resolved"};
 
-        static std::string dhakaDistricts[] = {"", "Dhaka", "Faridpur", "Gazipur", "Gopalganj", "Kishoreganj", "Madaripur", "Manikganj", "Munshiganj", "Narayanganj", "Narsingdi", "Rajbari", "Shariatpur", "Tangail"};
-        static std::string chattogramDistricts[] = {"", "Chattogram", "Bandarban", "Brahmanbaria", "Chandpur", "Cumilla", "Coxsbazar", "Feni", "Khagrachari", "Lakshmipur", "Noakhali", "Rangamati"};
-        static std::string rajshahiDistricts[] = {"", "Rajshahi", "Bogura", "Joypurhat", "Naogaon", "Natore", "Chapainawabganj", "Pabna", "Sirajganj"};
-        static std::string rangpurDistricts[] = {"", "Rangpur", "Dinajpur", "Gaibandha", "Kurigram", "Lalmonirhat", "Nilphamari", "Panchagarh", "Thakurgaon"};
-        static std::string khulnaDistricts[] = {"", "Khulna", "Bagerhat", "Chuadanga", "Jashore", "Jhenaidah", "Kushtia", "Magura", "Meherpur", "Narail", "Satkhira"};
-        static std::string barishalDistricts[] = {"", "Barishal", "Barguna", "Bhola", "Jhalakathi", "Patuakhali", "Pirojpur"};
-        static std::string sylhetDistricts[] = {"", "Sylhet", "Habiganj", "Moulivibazar", "Sunamganj"};
-        static std::string mymensinghDistricts[] = {"", "Mymensingh", "Jamalpur", "Netrokona", "Sherpur"};
-
-        static std::string* allDistricts[] = {nullptr, dhakaDistricts, chattogramDistricts, rajshahiDistricts, rangpurDistricts, khulnaDistricts, barishalDistricts, sylhetDistricts, mymensinghDistricts};
-        static int districtCount[] = {0, 13, 11, 8, 8, 10, 6, 4, 4};
-
         Disaster::Disaster() : severity(1), division(0), district(0), disasterType(0), affectedPeople(0), status(1) {}
 
         Disaster::Disaster(int id, const std::string& name, const std::string& type,
                            const std::string& location, const std::string& date, int severity,
                            int division, int district, int disasterType,
-                           int affectedPeople, int status)
+                           int affectedPeople, int status, const std::string& tenantId)
         {
             setId(id);
             this->name = name;
@@ -40,6 +28,7 @@ namespace AgroResQ
             this->disasterType = disasterType;
             this->affectedPeople = affectedPeople;
             this->status = status;
+            this->tenantId = tenantId;
         }
 
         void Disaster::setName(const std::string& name) { this->name = name; }
@@ -52,6 +41,7 @@ namespace AgroResQ
         void Disaster::setDisasterType(int disasterType) { this->disasterType = disasterType; }
         void Disaster::setAffectedPeople(int affectedPeople) { this->affectedPeople = affectedPeople; }
         void Disaster::setStatus(int status) { this->status = status; }
+        void Disaster::setTenantId(const std::string& tenantId) { this->tenantId = tenantId; }
 
         std::string Disaster::getName() const { return name; }
         std::string Disaster::getType() const { return type; }
@@ -63,6 +53,7 @@ namespace AgroResQ
         int Disaster::getDisasterType() const { return disasterType; }
         int Disaster::getAffectedPeople() const { return affectedPeople; }
         int Disaster::getStatus() const { return status; }
+        std::string Disaster::getTenantId() const { return tenantId; }
 
         std::string Disaster::getDivisionName() const
         {
@@ -71,6 +62,17 @@ namespace AgroResQ
 
         std::string Disaster::getDistrictName() const
         {
+            static std::string dhakaDistricts[] = {"", "Dhaka", "Faridpur", "Gazipur", "Gopalganj", "Kishoreganj", "Madaripur", "Manikganj", "Munshiganj", "Narayanganj", "Narsingdi", "Rajbari", "Shariatpur", "Tangail"};
+            static std::string chattogramDistricts[] = {"", "Chattogram", "Bandarban", "Brahmanbaria", "Chandpur", "Cumilla", "Coxsbazar", "Feni", "Khagrachari", "Lakshmipur", "Noakhali", "Rangamati"};
+            static std::string rajshahiDistricts[] = {"", "Rajshahi", "Bogura", "Joypurhat", "Naogaon", "Natore", "Chapainawabganj", "Pabna", "Sirajganj"};
+            static std::string rangpurDistricts[] = {"", "Rangpur", "Dinajpur", "Gaibandha", "Kurigram", "Lalmonirhat", "Nilphamari", "Panchagarh", "Thakurgaon"};
+            static std::string khulnaDistricts[] = {"", "Khulna", "Bagerhat", "Chuadanga", "Jashore", "Jhenaidah", "Kushtia", "Magura", "Meherpur", "Narail", "Satkhira"};
+            static std::string barishalDistricts[] = {"", "Barishal", "Barguna", "Bhola", "Jhalakathi", "Patuakhali", "Pirojpur"};
+            static std::string sylhetDistricts[] = {"", "Sylhet", "Habiganj", "Moulivibazar", "Sunamganj"};
+            static std::string mymensinghDistricts[] = {"", "Mymensingh", "Jamalpur", "Netrokona", "Sherpur"};
+            static std::string* allDistricts[] = {nullptr, dhakaDistricts, chattogramDistricts, rajshahiDistricts, rangpurDistricts, khulnaDistricts, barishalDistricts, sylhetDistricts, mymensinghDistricts};
+            static int districtCount[] = {0, 13, 11, 8, 8, 10, 6, 4, 4};
+
             if (division >= 1 && division <= 8 && district >= 1 && district <= districtCount[division])
                 return allDistricts[division][district];
             return "Unknown";
@@ -96,7 +98,8 @@ namespace AgroResQ
             std::stringstream stream;
             stream << getId() << "," << name << "," << type << "," << location << ","
                    << date << "," << severity << "," << division << "," << district << ","
-                   << disasterType << "," << affectedPeople << "," << status;
+                   << disasterType << "," << affectedPeople << "," << status << ","
+                   << tenantId;
             return stream.str();
         }
     }

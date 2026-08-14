@@ -1,314 +1,109 @@
 #include "ReportRepository.h"
-
-#include <fstream>
+#include "../../core/StringHelper.h"
 #include <sstream>
-
 
 namespace AgroResQ
 {
 namespace Repositories
 {
-
-
-ReportRepository::ReportRepository()
-{
-
-    filePath = "database/reports.txt";
-
-}
-
-
-
-
-
-
-std::string ReportRepository::serialize(
-    const Entities::Report& report)
-{
-
-    return report.toString();
-
-}
-
-
-
-
-
-
-Entities::Report ReportRepository::parse(
-    const std::string& line)
-{
-
-    std::stringstream stream(line);
-
-
-    std::string id;
-
-    std::string title;
-
-    std::string description;
-
-    std::string date;
-
-
-
-    getline(stream,id,',');
-
-    getline(stream,title,',');
-
-    getline(stream,description,',');
-
-    getline(stream,date,',');
-
-
-
-
-    return Entities::Report(
-        std::stoi(id),
-        title,
-        description,
-        date);
-
-}
-
-
-
-
-
-
-
-
-bool ReportRepository::add(
-    const Entities::Report& report)
-{
-
-    std::ofstream file(
-        filePath,
-        std::ios::app);
-
-
-
-    if(!file)
-        return false;
-
-
-
-    file
-    << serialize(report)
-    << "\n";
-
-
-
-    return true;
-
-}
-
-
-
-
-
-
-
-
-std::vector<Entities::Report> ReportRepository::getAll()
-{
-
-    std::vector<Entities::Report> reports;
-
-
-    std::ifstream file(filePath);
-
-
-
-    if(!file)
+    ReportRepository::ReportRepository()
+    {
+        filePath = "database/reports.txt";
+    }
+
+    Entities::Report ReportRepository::parse(const std::string& line) const
+    {
+        std::stringstream ss(line);
+        std::string id, title, description, date, tenantId;
+        std::getline(ss, id, ',');
+        std::getline(ss, title, ',');
+        std::getline(ss, description, ',');
+        std::getline(ss, date, ',');
+        std::getline(ss, tenantId);
+        return Entities::Report(
+            Core::safeStoi(id),
+            title, description, date,
+            tenantId
+        );
+    }
+
+    bool ReportRepository::add(const Entities::Report& report)
+    {
+        return fileManager.appendFile(filePath, report.toString() + "\n");
+    }
+
+    std::vector<Entities::Report> ReportRepository::getAll()
+    {
+        std::vector<Entities::Report> reports;
+        std::vector<std::string> lines = fileManager.readLines(filePath);
+        for (const auto& line : lines)
+        {
+            if (!line.empty())
+                reports.push_back(parse(line));
+        }
         return reports;
-
-
-
-    std::string line;
-
-
-
-    while(getline(file,line))
-    {
-
-        if(!line.empty())
-        {
-
-            reports.push_back(
-                parse(line));
-
-        }
-
     }
 
-
-
-    return reports;
-
-}
-
-
-
-
-
-
-
-
-bool ReportRepository::getById(
-    int id,
-    Entities::Report& report)
-{
-
-    auto reports = getAll();
-
-
-
-    for(auto& item : reports)
+    bool ReportRepository::getById(int id, Entities::Report& report)
     {
-
-        if(item.getId() == id)
+        auto all = getAll();
+        for (const auto& r : all)
         {
-
-            report = item;
-
-            return true;
-
+            if (r.getId() == id)
+            {
+                report = r;
+                return true;
+            }
         }
-
-    }
-
-
-
-    return false;
-
-}
-
-
-
-
-
-
-
-
-bool ReportRepository::update(
-    const Entities::Report& report)
-{
-
-    auto reports = getAll();
-
-
-    bool updated = false;
-
-
-
-    for(auto& item : reports)
-    {
-
-        if(item.getId() == report.getId())
-        {
-
-            item = report;
-
-            updated = true;
-
-        }
-
-    }
-
-
-
-    if(!updated)
         return false;
-
-
-
-
-    std::ofstream file(filePath);
-
-
-
-    for(auto& item : reports)
-    {
-
-        file
-        << serialize(item)
-        << "\n";
-
     }
 
-
-
-    return true;
-
-}
-
-
-
-
-
-
-
-
-bool ReportRepository::remove(
-    int id)
-{
-
-    auto reports = getAll();
-
-
-    bool removed = false;
-
-
-    std::vector<Entities::Report> updatedReports;
-
-
-
-    for(auto& item : reports)
+    bool ReportRepository::update(const Entities::Report& report)
     {
-
-        if(item.getId() == id)
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        for (auto& r : all)
         {
-
-            removed = true;
-
+            if (r.getId() == report.getId())
+            {
+                r = report;
+                found = true;
+            }
+            data += r.toString() + "\n";
         }
-        else
-        {
-
-            updatedReports.push_back(item);
-
-        }
-
+        if (!found) return false;
+        return fileManager.writeFile(filePath, data);
     }
 
-
-
-    if(!removed)
-        return false;
-
-
-
-    std::ofstream file(filePath);
-
-
-
-    for(auto& item : updatedReports)
+    bool ReportRepository::remove(int id)
     {
-
-        file
-        << serialize(item)
-        << "\n";
-
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        for (const auto& r : all)
+        {
+            if (r.getId() == id)
+            {
+                found = true;
+                continue;
+            }
+            data += r.toString() + "\n";
+        }
+        if (!found) return false;
+        return fileManager.writeFile(filePath, data);
     }
 
-
-
-    return true;
-
-}
-
-
-
+    std::vector<Entities::Report> ReportRepository::getByTenant(const std::string& tenantId)
+    {
+        std::vector<Entities::Report> result;
+        auto all = getAll();
+        for (const auto& r : all)
+        {
+            if (r.getTenantId() == tenantId || tenantId == "ALL")
+                result.push_back(r);
+        }
+        return result;
+    }
 }
 }
