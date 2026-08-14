@@ -4,15 +4,71 @@
 #include "core/AuthManager.h"
 #include "core/TenantManager.h"
 #include <iostream>
+#include <fstream>
 
 #ifdef _WIN32
 #include <direct.h>
 #include <io.h>
+#include <windows.h>
 #define mkdir _mkdir
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #endif
+
+std::string getExeDirectory()
+{
+    #ifdef _WIN32
+    char buffer[MAX_PATH];
+    GetModuleFileNameA(NULL, buffer, MAX_PATH);
+    std::string exePath = buffer;
+    size_t pos = exePath.find_last_of("\\/");
+    return exePath.substr(0, pos + 1);
+    #else
+    char buffer[1024];
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer)-1);
+    if (len != -1) {
+        buffer[len] = '\0';
+        std::string exePath = buffer;
+        size_t pos = exePath.find_last_of("/");
+        return exePath.substr(0, pos + 1);
+    }
+    return "./";
+    #endif
+}
+
+void ensureDatabase()
+{
+    std::string dbPath = getExeDirectory() + "database";
+    
+    // Create database folder if not exists
+    #ifdef _WIN32
+    if (_access(dbPath.c_str(), 0) != 0)
+    {
+        _mkdir(dbPath.c_str());
+    }
+    #else
+    struct stat st;
+    if (stat(dbPath.c_str(), &st) != 0)
+    {
+        mkdir(dbPath.c_str(), 0777);
+    }
+    #endif
+
+    std::string usersPath = dbPath + "/users.txt";
+    #ifdef _WIN32
+    if (_access(usersPath.c_str(), 0) != 0)
+    #else
+    if (stat(usersPath.c_str(), &st) != 0)
+    #endif
+    {
+        std::ofstream usersFile(usersPath);
+        usersFile << "1,admin,P1kAlMiG:4283eee1,ADMIN,ALL\n";
+        usersFile.close();
+        std::cout << "[INFO] Default users.txt created.\n";
+    }
+}
 
 int main()
 {
@@ -20,13 +76,9 @@ int main()
         AgroResQ::Core::Color::enableWindowsColors();
     #endif
 
-    // Create database folder
-    #ifdef _WIN32
-    if (_access("database", 0) != 0) _mkdir("database");
-    #else
-    struct stat st;
-    if (stat("database", &st) != 0) mkdir("database", 0777);
-    #endif
+
+    ensureDatabase();
+
 
     std::cout << AgroResQ::Core::Color::boldCyan()
               << "\n=========================================\n"
@@ -36,13 +88,14 @@ int main()
               << "=========================================\n"
               << AgroResQ::Core::Color::reset();
 
-    AgroResQ::Core::AuthManager::initialize();
 
-    
+    std::string usersPath = getExeDirectory() + "database/users.txt";
+    AgroResQ::Core::AuthManager::initialize(usersPath);
+
+
     std::cout << AgroResQ::Core::Color::yellow()
               << "[INFO] Default Admin: admin / admin123\n"
               << AgroResQ::Core::Color::reset();
-    
 
     std::string username, password;
     std::cout << "\nEnter Username: ";
@@ -76,7 +129,7 @@ int main()
     else
         AgroResQ::Core::TenantManager::setAllowedTenants({user.tenantId});
 
-    
+
     AgroResQ::Hardware::SensorService sensorService(true, "COM3");
     if (sensorService.isSensorConnected())
     {
