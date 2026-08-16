@@ -3,6 +3,7 @@
 #include <string>
 #include "../../entities/Family.h"
 #include "../../core/FileManager.h"
+#include "../../database/IndexedDB.h"
 
 namespace AgroResQ
 {
@@ -13,8 +14,11 @@ namespace AgroResQ
         private:
             std::string filePath;
             Core::FileManager fileManager;
+            Database::IndexedDB<int, Entities::Family> familyCache;
+
             Entities::Family parse(const std::string& line);
             std::string serialize(const Entities::Family& family);
+            void rebuildCache();
 
         public:
             FamilyRepository();

@@ -3,6 +3,7 @@
 #include <vector>
 #include "../../core/FileManager.h"
 #include "../../entities/Soil.h"
+#include "../../database/IndexedDB.h"
 
 namespace AgroResQ
 {
@@ -13,7 +14,10 @@ namespace AgroResQ
         private:
             Core::FileManager fileManager;
             std::string filePath;
+            Database::IndexedDB<int, Entities::Soil> soilCache;
+
             Entities::Soil parse(const std::string& line) const;
+            void rebuildCache();
 
         public:
             SoilRepository();

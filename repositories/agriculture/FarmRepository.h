@@ -3,6 +3,7 @@
 #include <vector>
 #include "../../core/FileManager.h"
 #include "../../entities/Farm.h"
+#include "../../database/IndexedDB.h"
 
 namespace AgroResQ
 {
@@ -13,7 +14,10 @@ namespace Repositories
     private:
         Core::FileManager fileManager;
         std::string filePath;
+        Database::IndexedDB<int, Entities::Farm> farmCache;
+
         Entities::Farm parse(const std::string& line) const;
+        void rebuildCache();
 
     public:
         FarmRepository();

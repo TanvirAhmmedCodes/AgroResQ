@@ -1,5 +1,6 @@
 #include "ReliefRepository.h"
 #include "../../core/StringHelper.h"
+#include "../../security/XORCipher.h"
 #include <sstream>
 
 namespace AgroResQ
@@ -13,7 +14,11 @@ namespace Repositories
 
     Entities::ReliefResource ReliefRepository::parse(const std::string& line) const
     {
-        std::stringstream ss(line);
+        Security::XORCipher cipher;
+        std::string decrypted = cipher.decrypt(line);
+        std::string dataToParse = decrypted.empty() ? line : decrypted;
+
+        std::stringstream ss(dataToParse);
         std::string id, name, category, quantity, unit, tenantId;
         std::getline(ss, id, ',');
         std::getline(ss, name, ',');
@@ -21,6 +26,7 @@ namespace Repositories
         std::getline(ss, quantity, ',');
         std::getline(ss, unit, ',');
         std::getline(ss, tenantId);
+
         return Entities::ReliefResource(
             Core::safeStoi(id),
             name, category,
@@ -32,7 +38,16 @@ namespace Repositories
 
     bool ReliefRepository::add(const Entities::ReliefResource& resource)
     {
-        return fileManager.appendFile(filePath, resource.toString() + "\n");
+        Security::XORCipher cipher;
+        std::string encrypted = cipher.encrypt(resource.toString());
+        bool ok = fileManager.appendFile(filePath, encrypted + "\n");
+
+        if (ok)
+        {
+            // Add to ledger: victimName = resource name, resourceType = category, quantity = quantity
+            ledger.addEntry(resource.getName(), resource.getCategory(), resource.getQuantity());
+        }
+        return ok;
     }
 
     std::vector<Entities::ReliefResource> ReliefRepository::getAll()
@@ -66,6 +81,8 @@ namespace Repositories
         auto all = getAll();
         bool found = false;
         std::string data;
+        Security::XORCipher cipher;
+
         for (auto& r : all)
         {
             if (r.getId() == resource.getId())
@@ -73,8 +90,9 @@ namespace Repositories
                 r = resource;
                 found = true;
             }
-            data += r.toString() + "\n";
+            data += cipher.encrypt(r.toString()) + "\n";
         }
+
         if (!found) return false;
         return fileManager.writeFile(filePath, data);
     }
@@ -84,6 +102,8 @@ namespace Repositories
         auto all = getAll();
         bool found = false;
         std::string data;
+        Security::XORCipher cipher;
+
         for (const auto& r : all)
         {
             if (r.getId() == id)
@@ -91,8 +111,9 @@ namespace Repositories
                 found = true;
                 continue;
             }
-            data += r.toString() + "\n";
+            data += cipher.encrypt(r.toString()) + "\n";
         }
+
         if (!found) return false;
         return fileManager.writeFile(filePath, data);
     }
@@ -107,6 +128,22 @@ namespace Repositories
                 result.push_back(r);
         }
         return result;
+    }
+
+    
+    Ledger::ReliefLedger& ReliefRepository::getLedger()
+    {
+        return ledger;
+    }
+
+    bool ReliefRepository::verifyLedger()
+    {
+        return ledger.verifyAllEntries();
+    }
+
+    void ReliefRepository::displayLedger()
+    {
+        ledger.displayLedger();
     }
 }
 }

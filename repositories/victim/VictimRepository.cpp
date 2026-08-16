@@ -1,5 +1,6 @@
 #include "VictimRepository.h"
 #include "../../core/StringHelper.h"
+#include "../../security/XORCipher.h"
 #include <fstream>
 #include <sstream>
 
@@ -10,6 +11,17 @@ namespace AgroResQ
         VictimRepository::VictimRepository()
         {
             filePath = "database/victims.txt";
+            rebuildCache();
+        }
+
+        void VictimRepository::rebuildCache()
+        {
+            victimCache.clear();
+            auto victims = getAll();
+            for (const auto& v : victims)
+            {
+                victimCache.add(v.getId(), v);
+            }
         }
 
         std::string VictimRepository::serialize(const Entities::Victim& victim)
@@ -19,7 +31,11 @@ namespace AgroResQ
 
         Entities::Victim VictimRepository::parse(const std::string& line)
         {
-            std::stringstream stream(line);
+            Security::XORCipher cipher;
+            std::string decrypted = cipher.decrypt(line);
+            std::string dataToParse = decrypted.empty() ? line : decrypted;
+
+            std::stringstream stream(dataToParse);
             std::string id, name, age, gender, address, vulnerable, familyId,
                         healthStatus, disabled, rescued, reliefReceived, missing,
                         priorityScore, shelterId, tenantId;
@@ -61,7 +77,14 @@ namespace AgroResQ
 
         bool VictimRepository::add(const Entities::Victim& victim)
         {
-            return fileManager.appendFile(filePath, serialize(victim) + "\n");
+            Security::XORCipher cipher;
+            std::string encrypted = cipher.encrypt(serialize(victim));
+            bool ok = fileManager.appendFile(filePath, encrypted + "\n");
+            if (ok)
+            {
+                victimCache.add(victim.getId(), victim);
+            }
+            return ok;
         }
 
         std::vector<Entities::Victim> VictimRepository::getAll()
@@ -78,12 +101,16 @@ namespace AgroResQ
 
         bool VictimRepository::getById(int id, Entities::Victim& victim)
         {
+            if (victimCache.get(id, victim))
+                return true;
+
             auto victims = getAll();
             for (auto& item : victims)
             {
                 if (item.getId() == id)
                 {
                     victim = item;
+                    victimCache.add(id, item);
                     return true;
                 }
             }
@@ -95,6 +122,8 @@ namespace AgroResQ
             auto victims = getAll();
             bool updated = false;
             std::string data;
+            Security::XORCipher cipher;
+
             for (auto& item : victims)
             {
                 if (item.getId() == victim.getId())
@@ -102,10 +131,16 @@ namespace AgroResQ
                     item = victim;
                     updated = true;
                 }
-                data += serialize(item) + "\n";
+                data += cipher.encrypt(serialize(item)) + "\n";
             }
+
             if (!updated) return false;
-            return fileManager.writeFile(filePath, data);
+            bool ok = fileManager.writeFile(filePath, data);
+            if (ok)
+            {
+                victimCache.add(victim.getId(), victim);
+            }
+            return ok;
         }
 
         bool VictimRepository::remove(int id)
@@ -113,6 +148,8 @@ namespace AgroResQ
             auto victims = getAll();
             bool removed = false;
             std::string data;
+            Security::XORCipher cipher;
+
             for (const auto& item : victims)
             {
                 if (item.getId() == id)
@@ -120,10 +157,16 @@ namespace AgroResQ
                     removed = true;
                     continue;
                 }
-                data += serialize(item) + "\n";
+                data += cipher.encrypt(serialize(item)) + "\n";
             }
+
             if (!removed) return false;
-            return fileManager.writeFile(filePath, data);
+            bool ok = fileManager.writeFile(filePath, data);
+            if (ok)
+            {
+                victimCache.remove(id);
+            }
+            return ok;
         }
 
         std::vector<Entities::Victim> VictimRepository::getByTenant(const std::string& tenantId)

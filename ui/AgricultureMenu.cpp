@@ -105,21 +105,25 @@ namespace AgroResQ
                     score += 25;
                 }
 
-                scoredCrops.push_back({score, crop});
+                scoredCrops.push_back(std::make_pair(score, crop));
             }
 
+            // ===== FIX: Use explicit type instead of generic lambda =====
             std::sort(
                 scoredCrops.begin(),
                 scoredCrops.end(),
-                [](const auto& a, const auto& b)
+                [](const std::pair<double, Entities::Crop>& a,
+                   const std::pair<double, Entities::Crop>& b) -> bool
                 {
                     return a.first > b.first;
                 });
+            // ============================================================
 
             std::cout << "\n========== RECOMMENDED CROPS (Ranked) ==========\n";
             int rank = 1;
-            for (const auto& item : scoredCrops)
+            for (std::vector<std::pair<double, Entities::Crop>>::const_iterator it = scoredCrops.begin(); it != scoredCrops.end(); ++it)
             {
+                const std::pair<double, Entities::Crop>& item = *it;
                 std::cout << "#" << rank++
                           << " | Crop: " << item.second.getCropName()
                           << " | Score: " << item.first
@@ -128,7 +132,7 @@ namespace AgroResQ
                           << "\n";
             }
 
-            if (scoredCrops.front().first == 0)
+            if (!scoredCrops.empty() && scoredCrops.front().first == 0)
             {
                 std::cout << "\n[INFO] No crop perfectly matches. Showing all available crops.\n";
             }

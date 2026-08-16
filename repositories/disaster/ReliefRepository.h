@@ -3,6 +3,7 @@
 #include <vector>
 #include "../../core/FileManager.h"
 #include "../../entities/ReliefResource.h"
+#include "../../ledger/ReliefLedger.h"
 
 namespace AgroResQ
 {
@@ -13,16 +14,24 @@ namespace Repositories
     private:
         Core::FileManager fileManager;
         std::string filePath;
+        Ledger::ReliefLedger ledger; 
+
         Entities::ReliefResource parse(const std::string& line) const;
 
     public:
         ReliefRepository();
+
         bool add(const Entities::ReliefResource& resource);
         bool update(const Entities::ReliefResource& resource);
         bool remove(int id);
         bool getById(int id, Entities::ReliefResource& resource);
         std::vector<Entities::ReliefResource> getAll();
         std::vector<Entities::ReliefResource> getByTenant(const std::string& tenantId);
+
+        
+        Ledger::ReliefLedger& getLedger();
+        bool verifyLedger();
+        void displayLedger();
     };
 }
 }

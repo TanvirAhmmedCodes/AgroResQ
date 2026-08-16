@@ -3,6 +3,7 @@
 #include <string>
 #include "../../entities/Victim.h"
 #include "../../core/FileManager.h"
+#include "../../database/IndexedDB.h"
 
 namespace AgroResQ
 {
@@ -13,8 +14,11 @@ namespace AgroResQ
         private:
             std::string filePath;
             Core::FileManager fileManager;
+            Database::IndexedDB<int, Entities::Victim> victimCache;
+
             Entities::Victim parse(const std::string& line);
             std::string serialize(const Entities::Victim& victim);
+            void rebuildCache();
 
         public:
             VictimRepository();

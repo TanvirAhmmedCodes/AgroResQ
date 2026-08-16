@@ -13,6 +13,7 @@
 #include "../services/ReportService.h"
 #include "../algorithms/BudgetCalculator.h"
 #include "../business/LicenseManager.h"
+#include "../graphics/WinDashboard.h"   
 #include "../analytics/PartnerAnalytics.h"
 #include "../core/AuthManager.h"
 
@@ -40,6 +41,7 @@ namespace AgroResQ
             
             Business::LicenseManager licenseManager;
             Analytics::PartnerAnalytics partnerAnalytics;
+              Graphics::WinDashboard winDashboard;
 
             void showDashboard();
             void showBudgetReport();

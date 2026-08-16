@@ -1,5 +1,6 @@
 #include "FarmRepository.h"
 #include "../../core/StringHelper.h"
+#include "../../security/XORCipher.h"
 #include <sstream>
 
 namespace AgroResQ
@@ -9,11 +10,26 @@ namespace Repositories
     FarmRepository::FarmRepository()
     {
         filePath = "database/farms.txt";
+        rebuildCache();
+    }
+
+    void FarmRepository::rebuildCache()
+    {
+        farmCache.clear();
+        auto farms = getAll();
+        for (const auto& f : farms)
+        {
+            farmCache.add(f.getId(), f);
+        }
     }
 
     Entities::Farm FarmRepository::parse(const std::string& line) const
     {
-        std::stringstream ss(line);
+        Security::XORCipher cipher;
+        std::string decrypted = cipher.decrypt(line);
+        std::string dataToParse = decrypted.empty() ? line : decrypted;
+
+        std::stringstream ss(dataToParse);
         std::string id, farmerName, location, landArea, soilType, cropName, tenantId;
         std::getline(ss, id, ',');
         std::getline(ss, farmerName, ',');
@@ -22,6 +38,7 @@ namespace Repositories
         std::getline(ss, soilType, ',');
         std::getline(ss, cropName, ',');
         std::getline(ss, tenantId);
+
         return Entities::Farm(
             Core::safeStoi(id),
             farmerName, location,
@@ -33,7 +50,84 @@ namespace Repositories
 
     bool FarmRepository::add(const Entities::Farm& farm)
     {
-        return fileManager.appendFile(filePath, farm.toString() + "\n");
+        Security::XORCipher cipher;
+        std::string encrypted = cipher.encrypt(farm.toString());
+        bool ok = fileManager.appendFile(filePath, encrypted + "\n");
+        if (ok)
+        {
+            farmCache.add(farm.getId(), farm);
+        }
+        return ok;
+    }
+
+    bool FarmRepository::update(const Entities::Farm& farm)
+    {
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        Security::XORCipher cipher;
+
+        for (auto& f : all)
+        {
+            if (f.getId() == farm.getId())
+            {
+                f = farm;
+                found = true;
+            }
+            data += cipher.encrypt(f.toString()) + "\n";
+        }
+
+        if (!found) return false;
+        bool ok = fileManager.writeFile(filePath, data);
+        if (ok)
+        {
+            farmCache.add(farm.getId(), farm);
+        }
+        return ok;
+    }
+
+    bool FarmRepository::remove(int id)
+    {
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        Security::XORCipher cipher;
+
+        for (const auto& f : all)
+        {
+            if (f.getId() == id)
+            {
+                found = true;
+                continue;
+            }
+            data += cipher.encrypt(f.toString()) + "\n";
+        }
+
+        if (!found) return false;
+        bool ok = fileManager.writeFile(filePath, data);
+        if (ok)
+        {
+            farmCache.remove(id);
+        }
+        return ok;
+    }
+
+    bool FarmRepository::getById(int id, Entities::Farm& farm)
+    {
+        if (farmCache.get(id, farm))
+            return true;
+
+        auto all = getAll();
+        for (const auto& f : all)
+        {
+            if (f.getId() == id)
+            {
+                farm = f;
+                farmCache.add(id, f);
+                return true;
+            }
+        }
+        return false;
     }
 
     std::vector<Entities::Farm> FarmRepository::getAll()
@@ -46,56 +140,6 @@ namespace Repositories
                 farms.push_back(parse(line));
         }
         return farms;
-    }
-
-    bool FarmRepository::getById(int id, Entities::Farm& farm)
-    {
-        auto all = getAll();
-        for (const auto& f : all)
-        {
-            if (f.getId() == id)
-            {
-                farm = f;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool FarmRepository::update(const Entities::Farm& farm)
-    {
-        auto all = getAll();
-        bool found = false;
-        std::string data;
-        for (auto& f : all)
-        {
-            if (f.getId() == farm.getId())
-            {
-                f = farm;
-                found = true;
-            }
-            data += f.toString() + "\n";
-        }
-        if (!found) return false;
-        return fileManager.writeFile(filePath, data);
-    }
-
-    bool FarmRepository::remove(int id)
-    {
-        auto all = getAll();
-        bool found = false;
-        std::string data;
-        for (const auto& f : all)
-        {
-            if (f.getId() == id)
-            {
-                found = true;
-                continue;
-            }
-            data += f.toString() + "\n";
-        }
-        if (!found) return false;
-        return fileManager.writeFile(filePath, data);
     }
 
     std::vector<Entities::Farm> FarmRepository::getByTenant(const std::string& tenantId)

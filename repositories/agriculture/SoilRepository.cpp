@@ -1,5 +1,6 @@
 #include "SoilRepository.h"
 #include "../../core/StringHelper.h"
+#include "../../security/XORCipher.h"
 #include <sstream>
 
 namespace AgroResQ
@@ -9,11 +10,26 @@ namespace AgroResQ
         SoilRepository::SoilRepository()
         {
             filePath = "database/soil.txt";
+            rebuildCache();
+        }
+
+        void SoilRepository::rebuildCache()
+        {
+            soilCache.clear();
+            auto soils = getAll();
+            for (const auto& s : soils)
+            {
+                soilCache.add(s.getId(), s);
+            }
         }
 
         Entities::Soil SoilRepository::parse(const std::string& line) const
         {
-            std::stringstream stream(line);
+            Security::XORCipher cipher;
+            std::string decrypted = cipher.decrypt(line);
+            std::string dataToParse = decrypted.empty() ? line : decrypted;
+
+            std::stringstream stream(dataToParse);
             std::string id, farmId, phLevel, moisture, soilType, tenantId;
             std::getline(stream, id, ',');
             std::getline(stream, farmId, ',');
@@ -21,6 +37,7 @@ namespace AgroResQ
             std::getline(stream, moisture, ',');
             std::getline(stream, soilType, ',');
             std::getline(stream, tenantId);
+
             return Entities::Soil(
                 Core::safeStoi(id),
                 farmId,
@@ -33,7 +50,14 @@ namespace AgroResQ
 
         bool SoilRepository::add(const Entities::Soil& soil)
         {
-            return fileManager.appendFile(filePath, soil.toString() + "\n");
+            Security::XORCipher cipher;
+            std::string encrypted = cipher.encrypt(soil.toString());
+            bool ok = fileManager.appendFile(filePath, encrypted + "\n");
+            if (ok)
+            {
+                soilCache.add(soil.getId(), soil);
+            }
+            return ok;
         }
 
         bool SoilRepository::update(const Entities::Soil& soil)
@@ -41,6 +65,8 @@ namespace AgroResQ
             std::vector<Entities::Soil> soils = getAll();
             bool found = false;
             std::string data;
+            Security::XORCipher cipher;
+
             for (auto& item : soils)
             {
                 if (item.getId() == soil.getId())
@@ -48,10 +74,16 @@ namespace AgroResQ
                     item = soil;
                     found = true;
                 }
-                data += item.toString() + "\n";
+                data += cipher.encrypt(item.toString()) + "\n";
             }
+
             if (!found) return false;
-            return fileManager.writeFile(filePath, data);
+            bool ok = fileManager.writeFile(filePath, data);
+            if (ok)
+            {
+                soilCache.add(soil.getId(), soil);
+            }
+            return ok;
         }
 
         bool SoilRepository::remove(int id)
@@ -59,6 +91,8 @@ namespace AgroResQ
             std::vector<Entities::Soil> soils = getAll();
             bool found = false;
             std::string data;
+            Security::XORCipher cipher;
+
             for (const auto& item : soils)
             {
                 if (item.getId() == id)
@@ -66,20 +100,30 @@ namespace AgroResQ
                     found = true;
                     continue;
                 }
-                data += item.toString() + "\n";
+                data += cipher.encrypt(item.toString()) + "\n";
             }
+
             if (!found) return false;
-            return fileManager.writeFile(filePath, data);
+            bool ok = fileManager.writeFile(filePath, data);
+            if (ok)
+            {
+                soilCache.remove(id);
+            }
+            return ok;
         }
 
         bool SoilRepository::getById(int id, Entities::Soil& soil)
         {
+            if (soilCache.get(id, soil))
+                return true;
+
             std::vector<Entities::Soil> soils = getAll();
             for (const auto& item : soils)
             {
                 if (item.getId() == id)
                 {
                     soil = item;
+                    soilCache.add(id, item);
                     return true;
                 }
             }

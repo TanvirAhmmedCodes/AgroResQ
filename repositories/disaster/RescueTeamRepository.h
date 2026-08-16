@@ -3,6 +3,7 @@
 #include <vector>
 #include "../../core/FileManager.h"
 #include "../../entities/RescueTeam.h"
+#include "../../database/IndexedDB.h"
 
 namespace AgroResQ
 {
@@ -13,7 +14,10 @@ namespace Repositories
     private:
         Core::FileManager fileManager;
         std::string filePath;
+        Database::IndexedDB<int, Entities::RescueTeam> teamCache;
+
         Entities::RescueTeam parse(const std::string& line) const;
+        void rebuildCache();
 
     public:
         RescueTeamRepository();

@@ -1,5 +1,6 @@
 #include "VolunteerRepository.h"
 #include "../../core/StringHelper.h"
+#include "../../security/XORCipher.h"
 #include <sstream>
 
 namespace AgroResQ
@@ -9,11 +10,26 @@ namespace Repositories
     VolunteerRepository::VolunteerRepository()
     {
         filePath = "database/volunteers.txt";
+        rebuildCache();
+    }
+
+    void VolunteerRepository::rebuildCache()
+    {
+        volunteerCache.clear();
+        auto volunteers = getAll();
+        for (const auto& v : volunteers)
+        {
+            volunteerCache.add(v.getId(), v);
+        }
     }
 
     Entities::Volunteer VolunteerRepository::parse(const std::string& line) const
     {
-        std::stringstream ss(line);
+        Security::XORCipher cipher;
+        std::string decrypted = cipher.decrypt(line);
+        std::string dataToParse = decrypted.empty() ? line : decrypted;
+
+        std::stringstream ss(dataToParse);
         std::string id, name, skill, location, contact, available, tenantId;
         std::getline(ss, id, ',');
         std::getline(ss, name, ',');
@@ -22,6 +38,7 @@ namespace Repositories
         std::getline(ss, contact, ',');
         std::getline(ss, available, ',');
         std::getline(ss, tenantId);
+
         return Entities::Volunteer(
             Core::safeStoi(id),
             name, skill, location, contact,
@@ -32,7 +49,84 @@ namespace Repositories
 
     bool VolunteerRepository::add(const Entities::Volunteer& volunteer)
     {
-        return fileManager.appendFile(filePath, volunteer.toString() + "\n");
+        Security::XORCipher cipher;
+        std::string encrypted = cipher.encrypt(volunteer.toString());
+        bool ok = fileManager.appendFile(filePath, encrypted + "\n");
+        if (ok)
+        {
+            volunteerCache.add(volunteer.getId(), volunteer);
+        }
+        return ok;
+    }
+
+    bool VolunteerRepository::update(const Entities::Volunteer& volunteer)
+    {
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        Security::XORCipher cipher;
+
+        for (auto& v : all)
+        {
+            if (v.getId() == volunteer.getId())
+            {
+                v = volunteer;
+                found = true;
+            }
+            data += cipher.encrypt(v.toString()) + "\n";
+        }
+
+        if (!found) return false;
+        bool ok = fileManager.writeFile(filePath, data);
+        if (ok)
+        {
+            volunteerCache.add(volunteer.getId(), volunteer);
+        }
+        return ok;
+    }
+
+    bool VolunteerRepository::remove(int id)
+    {
+        auto all = getAll();
+        bool found = false;
+        std::string data;
+        Security::XORCipher cipher;
+
+        for (const auto& v : all)
+        {
+            if (v.getId() == id)
+            {
+                found = true;
+                continue;
+            }
+            data += cipher.encrypt(v.toString()) + "\n";
+        }
+
+        if (!found) return false;
+        bool ok = fileManager.writeFile(filePath, data);
+        if (ok)
+        {
+            volunteerCache.remove(id);
+        }
+        return ok;
+    }
+
+    bool VolunteerRepository::getById(int id, Entities::Volunteer& volunteer)
+    {
+        if (volunteerCache.get(id, volunteer))
+            return true;
+
+        auto all = getAll();
+        for (const auto& v : all)
+        {
+            if (v.getId() == id)
+            {
+                volunteer = v;
+                volunteerCache.add(id, v);
+                return true;
+            }
+        }
+        return false;
     }
 
     std::vector<Entities::Volunteer> VolunteerRepository::getAll()
@@ -45,56 +139,6 @@ namespace Repositories
                 volunteers.push_back(parse(line));
         }
         return volunteers;
-    }
-
-    bool VolunteerRepository::getById(int id, Entities::Volunteer& volunteer)
-    {
-        auto all = getAll();
-        for (const auto& v : all)
-        {
-            if (v.getId() == id)
-            {
-                volunteer = v;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool VolunteerRepository::update(const Entities::Volunteer& volunteer)
-    {
-        auto all = getAll();
-        bool found = false;
-        std::string data;
-        for (auto& v : all)
-        {
-            if (v.getId() == volunteer.getId())
-            {
-                v = volunteer;
-                found = true;
-            }
-            data += v.toString() + "\n";
-        }
-        if (!found) return false;
-        return fileManager.writeFile(filePath, data);
-    }
-
-    bool VolunteerRepository::remove(int id)
-    {
-        auto all = getAll();
-        bool found = false;
-        std::string data;
-        for (const auto& v : all)
-        {
-            if (v.getId() == id)
-            {
-                found = true;
-                continue;
-            }
-            data += v.toString() + "\n";
-        }
-        if (!found) return false;
-        return fileManager.writeFile(filePath, data);
     }
 
     std::vector<Entities::Volunteer> VolunteerRepository::getByTenant(const std::string& tenantId)

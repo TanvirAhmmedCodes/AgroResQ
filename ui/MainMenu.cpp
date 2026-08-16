@@ -2,6 +2,7 @@
 #include "../core/Color.h"
 #include "../core/TenantManager.h"
 #include "../core/AuthManager.h"
+#include "../graphics/WinDashboard.h"
 #include <iostream>
 #include <iomanip>
 
@@ -166,7 +167,7 @@ namespace AgroResQ
                     break;
                 case 12:
                     if (hasAccessToFeature("DASHBOARD"))
-                        showDashboard();
+                        winDashboard.show();   // ===== Windows Native Dashboard =====
                     else
                         std::cout << "\n\t\t\t\t\t\tAccess Denied.\n";
                     break;
@@ -190,53 +191,6 @@ namespace AgroResQ
                     std::cout << "\n\t\t\t\t\t\tInvalid Choice.\n";
                 }
             } while (choice != 0);
-        }
-
-        void MainMenu::showDashboard()
-        {
-            std::cout << "\n\t\t\t\t\t\t============================================================\n";
-            std::cout << "\t\t\t\t\t\t                    AGRO-RESQ DASHBOARD\n";
-            std::cout << "\t\t\t\t\t\t============================================================\n";
-            if (licenseManager.getTier() == Business::LicenseTier::FREE)
-            {
-                std::cout << "\n\t\t\t\t\t\t[INFO] You are on FREE tier. Upgrade to PREMIUM or NGO for full stats.\n";
-                std::cout << "\t\t\t\t\t\tTotal Disasters: " << reportService.getTotalDisasters() << "\n";
-                std::cout << "\t\t\t\t\t\tTotal Victims: " << reportService.getTotalVictims() << "\n";
-            }
-            else
-            {
-                std::cout << "\n\t\t\t\t\t\t--- DISASTER STATISTICS ---\n";
-                std::cout << "\t\t\t\t\t\tTotal Disasters Recorded    : " << reportService.getTotalDisasters() << "\n";
-                std::cout << "\n\t\t\t\t\t\t--- VICTIM STATISTICS ---\n";
-                std::cout << "\t\t\t\t\t\tTotal Victims Registered    : " << reportService.getTotalVictims() << "\n";
-                std::cout << "\t\t\t\t\t\tVictims Rescued             : " << reportService.getRescuedVictimsCount() << "\n";
-                std::cout << "\t\t\t\t\t\tVictims Missing             : " << reportService.getMissingVictimsCount() << "\n";
-                std::cout << "\t\t\t\t\t\tRelief Received             : " << reportService.getReliefReceivedCount() << "\n";
-                std::cout << "\n\t\t\t\t\t\t--- SHELTER STATISTICS ---\n";
-                std::cout << "\t\t\t\t\t\tTotal Shelters Available    : " << reportService.getTotalShelters() << "\n";
-                std::cout << "\t\t\t\t\t\tAvailable Shelter Space     : " << reportService.getAvailableShelterSpace() << "\n";
-            }
-            if (licenseManager.canAccess(Business::Feature::PARTNER_ANALYTICS) && hasAccessToFeature("PARTNER_ANALYTICS"))
-            {
-                showPartnerReport();
-            }
-            std::cout << "\n\t\t\t\t\t\t============================================================\n";
-            if (reportService.getMissingVictimsCount() > 0)
-            {
-                std::cout << "\n\t\t\t\t\t\t[ALERT] " << reportService.getMissingVictimsCount()
-                          << " victims are still missing! Immediate action required.\n";
-            }
-            if (reportService.getAvailableShelterSpace() < 10)
-            {
-                std::cout << "\t\t\t\t\t\t[WARNING] Shelter space is critically low!\n";
-            }
-            if (reportService.getTotalDisasters() == 0)
-            {
-                std::cout << "\n\t\t\t\t\t\t[INFO] No disasters recorded. System is on standby.\n";
-            }
-            std::cout << "\n\t\t\t\t\t\tPress Enter to continue...";
-            std::cin.ignore();
-            std::cin.get();
         }
 
         void MainMenu::showPartnerReport()
