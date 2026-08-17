@@ -1,7 +1,7 @@
 #pragma once
 #include "ISensor.h"
 #include <string>
-#include <fstream>
+#include <windows.h>
 
 namespace AgroResQ
 {
@@ -11,7 +11,7 @@ namespace AgroResQ
         {
         private:
             std::string port;
-            std::ifstream serialPort;
+            HANDLE hSerial;
             bool connected;
             std::string lastData;
 
