@@ -43,24 +43,38 @@ bool SensorSyncService::syncOnce()
         return false;
     }
 
-    std::cout << "[SensorSync] Read: Moisture=" << data.moisture
-              << " pH=" << data.ph
-              << " Temp=" << data.temperature
-              << " Hum=" << data.humidity << "\n";
+    // ===== Log the data with nice formatting =====
+    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
+    std::cout << "║  🌾 SENSOR DATA RECEIVED FROM ESP32                          ║\n";
+    std::cout << "╠════════════════════════════════════════════════════════════════╣\n";
+    std::cout << "║  Soil Moisture : " << data.moisture << "%";
+    for(int i = 0; i < 22 - std::to_string(data.moisture).length(); i++) std::cout << " ";
+    std::cout << "║\n";
+    std::cout << "║  pH Level      : " << data.ph;
+    for(int i = 0; i < 22 - std::to_string(data.ph).length(); i++) std::cout << " ";
+    std::cout << "║\n";
+    std::cout << "║  Temperature   : " << data.temperature << "°C";
+    for(int i = 0; i < 22 - std::to_string(data.temperature).length(); i++) std::cout << " ";
+    std::cout << "║\n";
+    std::cout << "║  Humidity      : " << data.humidity << "%";
+    for(int i = 0; i < 22 - std::to_string(data.humidity).length(); i++) std::cout << " ";
+    std::cout << "║\n";
+    std::cout << "╚════════════════════════════════════════════════════════════════╝\n\n";
 
-    // Get current tenant ID from logged-in user
+    // ===== Get current tenant ID =====
     std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
 
+    // ===== Save to database =====
     bool soilOk = soilService.addSoil(defaultFarmId, data.ph, data.moisture, defaultSoilType);
     bool weatherOk = weatherService.addWeather(defaultFarmId, data.temperature, data.humidity, 0.0);
 
     if (soilOk && weatherOk)
     {
-        std::cout << "[SensorSync] Data saved successfully.\n";
+        std::cout << "[SensorSync] ✅ Data saved successfully to database.\n";
         return true;
     }
 
-    std::cout << "[SensorSync] Failed to save data.\n";
+    std::cout << "[SensorSync] ❌ Failed to save data.\n";
     return false;
 }
 
@@ -74,5 +88,5 @@ std::string SensorSyncService::getSensorInfo() const
     return sensorService.getSensorInfo();
 }
 
-} 
+}
 }

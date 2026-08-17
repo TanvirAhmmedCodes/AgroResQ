@@ -61,11 +61,15 @@ namespace AgroResQ
             return "";
         }
 
-        bool RealSensor::parseData(const std::string& data, double& moisture, double& ph, double& temp, double& humidity)
+        // ===== UPDATED: Parse 6 fields (moisture,ph,temp,humidity,waterLevel,flood) =====
+        bool RealSensor::parseData(const std::string& data, double& moisture, double& ph, 
+                                   double& temp, double& humidity)
         {
             std::stringstream ss(data);
             std::string token;
             int count = 0;
+            double waterLevel = 0;
+            int floodStatus = 0;
 
             while (std::getline(ss, token, ','))
             {
@@ -78,6 +82,8 @@ namespace AgroResQ
                         case 1: ph = value; break;
                         case 2: temp = value; break;
                         case 3: humidity = value; break;
+                        case 4: waterLevel = value; break;  // Store but not used yet
+                        case 5: floodStatus = (int)value; break;  // Store but not used yet
                     }
                     count++;
                 }
@@ -87,7 +93,13 @@ namespace AgroResQ
                 }
             }
 
-            return count == 4;
+            // ===== Log if flood detected =====
+            if (floodStatus == 1)
+            {
+                std::cout << "[SENSOR] ⚠️ FLOOD DETECTED! Water Level: " << waterLevel << " cm\n";
+            }
+
+            return count >= 4;
         }
 
         double RealSensor::readMoisture()
@@ -165,7 +177,7 @@ namespace AgroResQ
 
         std::string RealSensor::getSensorName() const
         {
-            return "Real Arduino Sensor (" + port + ")";
+            return "ESP32 AgroResQ Sensor (" + port + ")";
         }
 
         void RealSensor::setPort(const std::string& port)
