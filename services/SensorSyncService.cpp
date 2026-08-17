@@ -1,6 +1,7 @@
 #include "SensorSyncService.h"
 #include "../core/AuthManager.h"
 #include <iostream>
+#include <windows.h> 
 
 namespace AgroResQ
 {
@@ -23,6 +24,18 @@ void SensorSyncService::setDefaultSoilType(const std::string& soilType)
     defaultSoilType = soilType;
 }
 
+void SensorSyncService::syncLoop(int intervalSeconds)
+{
+    std::cout << "[SensorSync] Auto-sync started (every " << intervalSeconds << " seconds)\n";
+    std::cout << "Press Ctrl+C to stop\n\n";
+    
+    while (true)
+    {
+        syncOnce();
+        Sleep(intervalSeconds * 1000); 
+    }
+}
+
 bool SensorSyncService::syncOnce()
 {
     if (!sensorService.isSensorConnected())
@@ -43,23 +56,15 @@ bool SensorSyncService::syncOnce()
         return false;
     }
 
-    // ===== Log the data with nice formatting =====
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  🌾 SENSOR DATA RECEIVED FROM ESP32                          ║\n";
-    std::cout << "╠════════════════════════════════════════════════════════════════╣\n";
-    std::cout << "║  Soil Moisture : " << data.moisture << "%";
-    for(int i = 0; i < 22 - std::to_string(data.moisture).length(); i++) std::cout << " ";
-    std::cout << "║\n";
-    std::cout << "║  pH Level      : " << data.ph;
-    for(int i = 0; i < 22 - std::to_string(data.ph).length(); i++) std::cout << " ";
-    std::cout << "║\n";
-    std::cout << "║  Temperature   : " << data.temperature << "°C";
-    for(int i = 0; i < 22 - std::to_string(data.temperature).length(); i++) std::cout << " ";
-    std::cout << "║\n";
-    std::cout << "║  Humidity      : " << data.humidity << "%";
-    for(int i = 0; i < 22 - std::to_string(data.humidity).length(); i++) std::cout << " ";
-    std::cout << "║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n\n";
+    // ===== Plain text format (no emojis, no box-drawing) =====
+    std::cout << "\n============================================================\n";
+    std::cout << "  SENSOR DATA RECEIVED FROM ESP32                           \n";
+    std::cout << "============================================================\n";
+    std::cout << "  Soil Moisture : " << data.moisture << "%\n";
+    std::cout << "  pH Level      : " << data.ph << "\n";
+    std::cout << "  Temperature   : " << data.temperature << "°C\n";
+    std::cout << "  Humidity      : " << data.humidity << "%\n";
+    std::cout << "============================================================\n\n";
 
     // ===== Get current tenant ID =====
     std::string tenantId = Core::AuthManager::getCurrentUser().tenantId;
@@ -70,11 +75,11 @@ bool SensorSyncService::syncOnce()
 
     if (soilOk && weatherOk)
     {
-        std::cout << "[SensorSync] ✅ Data saved successfully to database.\n";
+        std::cout << "[SensorSync] Data saved successfully to database.\n";
         return true;
     }
 
-    std::cout << "[SensorSync] ❌ Failed to save data.\n";
+    std::cout << "[SensorSync] Failed to save data.\n";
     return false;
 }
 

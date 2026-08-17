@@ -27,6 +27,7 @@ namespace AgroResQ
             void recommendCrop();
             void readFromSensor();
             void syncSensorData(); 
+            void startAutoSync(); 
 
         public:
             AgricultureMenu();

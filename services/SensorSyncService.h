@@ -25,12 +25,10 @@ public:
     void setDefaultSoilType(const std::string& soilType);
 
     bool syncOnce(); 
-
-   
+    void syncLoop(int intervalSeconds);   // ===== NEW: Added =====
     bool isHardwareConnected();
-
     std::string getSensorInfo() const; 
 };
 
-} 
-} 
+}
+}

@@ -28,7 +28,7 @@ namespace AgroResQ
                 std::cout << "6. Crop Recommendation (AI Based)\n";
                 std::cout << "7. Read Data from Sensor\n";
                 std::cout << "8. Sync Sensor Data to Database\n";
-                
+                std::cout << "9. Auto-Sync (Every 10 sec)\n";  
                 std::cout << "0. Back\n";
                 std::cout << "=========================================\n";
                 std::cout << "Enter Choice: ";
@@ -45,6 +45,7 @@ namespace AgroResQ
                 case 6: recommendCrop(); break;
                 case 7: readFromSensor(); break;
                 case 8: syncSensorData(); break;
+                case 9: startAutoSync(); break;  
               
                 case 0: break;
                 default: std::cout << "\nInvalid Choice.\n";
@@ -228,6 +229,16 @@ namespace AgroResQ
             }
 
             std::cout << "=========================================\n";
+        }
+         void AgricultureMenu::startAutoSync()
+        {
+            std::cout << "\n========== AUTO-SYNC STARTED ==========\n";
+            std::cout << "Sensor: " << syncService.getSensorInfo() << "\n";
+            std::cout << "Syncing every 10 seconds...\n";
+            std::cout << "Press Ctrl+C to stop\n";
+            std::cout << "=========================================\n\n";
+
+            syncService.syncLoop(10);  // This will run until interrupted
         }
     }
 }
